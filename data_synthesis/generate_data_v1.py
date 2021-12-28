@@ -58,6 +58,8 @@ def generate_iso_subgraph(graph, no_of_nodes,
         iteration += 1
         if iteration > 5:
             node_ratio *= 1.05
+            if node_ratio > 1:
+                node_ratio = 1
             iteration = 0
 
     return subgraph
@@ -205,6 +207,8 @@ def generate_noniso_subgraph(graph, no_of_nodes, avg_subgraph_size,
         iteration += 1
         if iteration > 5:
             node_ratio *= 1.05
+            if node_ratio > 1:
+                node_ratio = 1
             iteration = 0
 
     if subgraph.number_of_nodes() > no_of_nodes:
