@@ -49,7 +49,7 @@ def generate_iso_subgraph(graph, no_of_nodes,
     subgraph = None
     iteration = 0
 
-    while subgraph is None or not nx.is_connected(subgraph):
+    while subgraph is None or subgraph.number_of_nodes() < 2 or not nx.is_connected(subgraph):
         chose_nodes = np.random.choice([0, 1], size=graph_nodes, replace=True, p=[1 - node_ratio, node_ratio])
         remove_nodes = np.where(chose_nodes == 0)[0]
         subgraph = graph.copy()
@@ -61,6 +61,12 @@ def generate_iso_subgraph(graph, no_of_nodes,
             if node_ratio > 1:
                 node_ratio = 1
             iteration = 0
+
+    high = subgraph.number_of_edges() - subgraph.number_of_nodes() + 2
+    if high > 0:
+        modify_times = np.random.randint(0, high)
+        for _ in range(modify_times):
+            subgraph = remove_random_edge(subgraph)
 
     return subgraph
 
@@ -82,12 +88,9 @@ def remove_random_nodes(graph, num_nodes):
 
 def remove_random_edge(graph):
     new_graph = None
-
+    
     while new_graph is None or not nx.is_connected(new_graph):
-        delete_edge = np.random.choice(graph.nodes, size=2, replace=False)
-        while not graph.has_edge(*delete_edge):
-            delete_edge = np.random.choice(graph.nodes, size=2, replace=False)
-
+        delete_edge = choice(list(graph.edges))
         new_graph = graph.copy()
         new_graph.remove_edge(*delete_edge)
 
@@ -128,7 +131,7 @@ def add_random_edges(current_graph, NE, min_edges=61, max_edges=122, nuprobabili
             # print('Connected:', connected)
             # print('Unconnected', unconnected
 
-        num_edges = np.random.randint(min_edges, max_edges)
+        num_edges = np.random.randint(min_edges, max_edges+1)
 
         while current_graph.number_of_edges() < num_edges:
             edge_label = np.random.randint(0, NE)
@@ -145,7 +148,7 @@ def add_random_nodes(graph, num_nodes, number_label_node, number_label_edge, min
     added_nodes = []
     for i in range(number_of_possible_nodes_to_add):
         node_label = np.random.randint(0, number_label_node)
-        added_nodes.append((node_id, {'label': node_label, 'color': 'blue'}))
+        added_nodes.append((node_id, {'label': node_label}))
         node_id += 1
 
     # add all nodes to current graph
@@ -154,9 +157,12 @@ def add_random_nodes(graph, num_nodes, number_label_node, number_label_edge, min
     return graph
 
 def random_modify(graph, NN, NE):
-    num_steps = np.random.randint(1, 10)
+    num_steps = np.random.randint(1, graph.number_of_nodes() + graph.number_of_edges())
+    modify_type = None
+
     while num_steps > 0:
         modify_type = np.random.randint(0, 2)
+
         if modify_type == 0:
             chose_node = np.random.choice(graph.nodes)
             origin_label = graph.nodes[chose_node]["label"]
@@ -178,9 +184,6 @@ def random_modify(graph, NN, NE):
 
             graph[chose_edge[0]][chose_edge[1]]["label"] = new_label
 
-        else:
-            graph = remove_random_edge(graph)
-
         num_steps -= 1
 
     return graph
@@ -198,7 +201,7 @@ def generate_noniso_subgraph(graph, no_of_nodes, avg_subgraph_size,
     subgraph = None
     iteration = 0
 
-    while subgraph is None or not nx.is_connected(subgraph):
+    while subgraph is None or subgraph.number_of_nodes() < 2 or not nx.is_connected(subgraph):
         chose_nodes = np.random.choice([0, 1], size=graph_nodes, replace=True, p=[1 - node_ratio, node_ratio])
         remove_nodes = np.where(chose_nodes == 0)[0]
         subgraph = graph.copy()
@@ -215,8 +218,14 @@ def generate_noniso_subgraph(graph, no_of_nodes, avg_subgraph_size,
         subgraph = remove_random_nodes(subgraph, no_of_nodes)
     elif subgraph.number_of_nodes() < no_of_nodes:
         subgraph = add_random_nodes(subgraph, no_of_nodes, number_label_node, number_label_edge, min_edges, max_edges)
-    else:
-        subgraph = random_modify(subgraph, number_label_node, number_label_edge)
+
+    high = subgraph.number_of_edges() - subgraph.number_of_nodes() + 2
+    if high > 0:
+        modify_times = np.random.randint(0, high)
+        for _ in range(modify_times):
+            subgraph = remove_random_edge(subgraph)
+
+    subgraph = random_modify(subgraph, number_label_node, number_label_edge)
 
     return subgraph
 
@@ -227,17 +236,13 @@ def generate_subgraphs(graph, number_subgraph_per_source,
     list_noniso_subgraphs = []
 
     for _ in tqdm(range(number_subgraph_per_source)):
-        no_of_nodes = int(np.random.normal(avg_subgraph_size, std_subgraph_size))
-        if no_of_nodes < avg_subgraph_size:
+        # no_of_nodes = int(np.random.normal(avg_subgraph_size, std_subgraph_size))
+        no_of_nodes = np.random.randint(2, graph.number_of_nodes()+1)
+        prob = np.random.randint(0, 2)
+        if prob == 1:
             list_iso_subgraphs.append(generate_iso_subgraph(graph, no_of_nodes, *args, **kwargs))
-        elif no_of_nodes > avg_subgraph_size:
-            list_noniso_subgraphs.append(generate_noniso_subgraph(graph, no_of_nodes, avg_subgraph_size, *args, **kwargs))
         else:
-            prob = np.random.randint(0, 1)
-            if prob == 1:
-                list_iso_subgraphs.append(generate_iso_subgraph(graph, no_of_nodes, *args, **kwargs))
-            else:
-                list_noniso_subgraphs.append(generate_noniso_subgraph(graph, no_of_nodes, avg_subgraph_size, *args, **kwargs))
+            list_noniso_subgraphs.append(generate_noniso_subgraph(graph, no_of_nodes, avg_subgraph_size, *args, **kwargs))
 
     return list_iso_subgraphs, list_noniso_subgraphs
 
@@ -287,9 +292,12 @@ def generate_dataset(dataset_path, is_continue, number_source, *args, **kwargs):
         remaining_sample = np.array(sorted(set(range(number_source)) - set(generated_sample)))
         gap_list = remaining_sample[1:] - remaining_sample[:-1]
         gap_idx = np.where(gap_list > 1)[0] + 1
-        list_idx = [(remaining_sample[0], remaining_sample[gap_idx[0]])] + \
-                   [(remaining_sample[gap_idx[i]], remaining_sample[gap_idx[i+1]]) for i in range(gap_idx.shape[0]-1)] + \
-                   [(remaining_sample[gap_idx[-1]], remaining_sample[-1]+1)]
+        if len(gap_idx) < 1:
+            list_idx = [(remaining_sample[0], remaining_sample[-1]+1)]
+        else:
+            list_idx = [(remaining_sample[0], remaining_sample[gap_idx[0]])] + \
+                    [(remaining_sample[gap_idx[i]], remaining_sample[gap_idx[i+1]]) for i in range(gap_idx.shape[0]-1)] + \
+                    [(remaining_sample[gap_idx[-1]], remaining_sample[-1]+1)]
     
         for start_idx, stop_idx in list_idx:
             list_processes.append(Process(target=generate_batch, 
@@ -360,6 +368,7 @@ def save_per_source(graph_id, H, iso_subgraphs, noniso_subgraphs, dataset_path):
     nisf = open(noniso_subgraph_file, "w", encoding="utf-8")
     for subgraph_id, S in enumerate(noniso_subgraphs):
         nisf.write('t # {0}\n'.format(subgraph_id))
+        node_mapping = {}
 
         for node_idx, node_emb in enumerate(S.nodes):
             nisf.write('v {} {}\n'.format(node_idx, S.nodes[node_emb]['label']))

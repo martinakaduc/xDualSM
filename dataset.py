@@ -8,12 +8,13 @@ import networkx as nx
 from torch.utils.data import Dataset
 from scipy.spatial import distance_matrix
 from torch.utils.data.sampler import Sampler
-random.seed(0)
+
+random.seed(42)
 
 def onehot_encoding_node(m, embedding_dim, is_subgraph=True):
     n = m.number_of_nodes()
     H = []
-    for i in range(n):
+    for i in m.nodes:
         H.append(utils.node_feature(m, i, embedding_dim))
     H = np.array(H)
 
@@ -64,7 +65,7 @@ class BaseDataset(Dataset):
         valid = np.zeros((n1+n2,))
         valid[:n1] = 1
         
-        #pIC50 to class
+        # iso to class
         Y = 1 if 'iso' in key else 0
 
         #if n1+n2 > 300 : return None
