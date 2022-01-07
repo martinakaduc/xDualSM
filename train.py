@@ -131,6 +131,9 @@ def main(args):
             train_losses.append(loss.data.cpu().numpy())
             train_true.append(Y.data.cpu().numpy())
             train_pred.append(pred.data.cpu().numpy())
+
+            H, A1, A2, Y, V = H.to("cpu"), A1.to("cpu"), A2.to("cpu"),\
+                                Y.to("cpu"), V.to("cpu")
         
         model.eval()
         for sample in tqdm(test_dataloader):
@@ -148,6 +151,9 @@ def main(args):
             test_losses.append(loss.data.cpu().numpy())
             test_true.append(Y.data.cpu().numpy())
             test_pred.append(pred.data.cpu().numpy())
+
+            H, A1, A2, Y, V = H.to("cpu"), A1.to("cpu"), A2.to("cpu"),\
+                                Y.to("cpu"), V.to("cpu")
             
         train_losses = np.mean(np.array(train_losses))
         test_losses = np.mean(np.array(test_losses))
