@@ -58,8 +58,10 @@ class BaseDataset(Dataset):
         agg_adj1[n1:, n1:] = adj2
         agg_adj2 = np.copy(agg_adj1)
         dm = distance_matrix(H1, H2)
-        agg_adj2[:n1,n1:] = np.copy(dm)
-        agg_adj2[n1:,:n1] = np.copy(np.transpose(dm))
+        dm_new = np.zeros_like(dm)
+        dm_new[dm == 0.0] = 1.0
+        agg_adj2[:n1,n1:] = np.copy(dm_new)
+        agg_adj2[n1:,:n1] = np.copy(np.transpose(dm_new))
 
         # node indice for aggregation
         valid = np.zeros((n1+n2,))
