@@ -18,10 +18,10 @@ def onehot_encoding_node(m, embedding_dim, is_subgraph=True):
         H.append(utils.node_feature(m, i, embedding_dim))
     H = np.array(H)
 
-    if is_subgraph:
-        H = np.concatenate([H, np.zeros((n,embedding_dim))], 1)
-    else:
-        H = np.concatenate([np.zeros((n,embedding_dim)), H], 1)
+    # if is_subgraph:
+    #     H = np.concatenate([H, np.zeros((n,embedding_dim))], 1)
+    # else:
+    #     H = np.concatenate([np.zeros((n,embedding_dim)), H], 1)
 
     return H        
 
