@@ -52,7 +52,6 @@ class BaseDataset(Dataset):
         H2 = onehot_encoding_node(m2, self.embedding_dim, is_subgraph=False)
         
         # Aggregation node encoding
-        H = np.concatenate([H1, H2], 0)
         agg_adj1 = np.zeros((n1+n2, n1+n2))
         agg_adj1[:n1, :n1] = adj1
         agg_adj1[n1:, n1:] = adj2
@@ -62,6 +61,10 @@ class BaseDataset(Dataset):
         dm_new[dm == 0.0] = 1.0
         agg_adj2[:n1,n1:] = np.copy(dm_new)
         agg_adj2[n1:,:n1] = np.copy(np.transpose(dm_new))
+        
+        H1 = np.concatenate([H1, np.zeros((n1,self.embedding_dim))], 1)
+        H2 = np.concatenate([np.zeros((n2,self.embedding_dim)), H2], 1)
+        H = np.concatenate([H1, H2], 0)
 
         # node indice for aggregation
         valid = np.zeros((n1+n2,))

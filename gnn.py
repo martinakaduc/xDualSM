@@ -25,7 +25,7 @@ class gnn(torch.nn.Module):
         
         self.mu = nn.Parameter(torch.Tensor([args.initial_mu]).float())
         self.dev = nn.Parameter(torch.Tensor([args.initial_dev]).float())
-        self.embede = nn.Linear(args.embedding_dim, d_graph_layer, bias = False)
+        self.embede = nn.Linear(2*args.embedding_dim, d_graph_layer, bias = False)
 
     def embede_graph(self, data):
         c_hs, c_adjs1, c_adjs2, c_valid = data
