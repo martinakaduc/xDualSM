@@ -89,7 +89,7 @@ class gnn(torch.nn.Module):
         topabot = torch.where(samelb == 1.0, topabot, self.zeros)
         topabot = topabot.sum((1,2))
         
-        return (top / (topabot - top + 1)).sum(0)
+        return (top / (topabot - top + 1)).sum(0) / attention.shape[0]
 
     def get_refined_adjs2(self, data):
         c_hs, c_adjs1, c_adjs2, c_valid = data
