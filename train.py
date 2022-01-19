@@ -116,14 +116,14 @@ def main(args):
         model.train()
         for sample in tqdm(train_dataloader):
             model.zero_grad()
-            H, A1, A2, Y, V, keys = sample 
-            H, A1, A2, Y, V = H.to(device), A1.to(device), A2.to(device),\
-                                Y.to(device), V.to(device)
+            H, A1, A2, M, S, Y, V, _ = sample 
+            H, A1, A2, M, S, Y, V = H.to(device), A1.to(device), A2.to(device),\
+                                M.to(device), S.to(device), Y.to(device), V.to(device)
             
             #train neural network
-            pred = model.train_model((H, A1, A2, V))
+            pred, attn_loss= model.train_model((H, A1, A2, V), (M, S))
 
-            loss = loss_fn(pred, Y) 
+            loss = loss_fn(pred, Y) + attn_loss
             loss.backward()
             optimizer.step()
             
@@ -131,29 +131,23 @@ def main(args):
             train_losses.append(loss.data.cpu().numpy())
             train_true.append(Y.data.cpu().numpy())
             train_pred.append(pred.data.cpu().numpy())
-
-            H, A1, A2, Y, V = H.to("cpu"), A1.to("cpu"), A2.to("cpu"),\
-                                Y.to("cpu"), V.to("cpu")
         
         model.eval()
         for sample in tqdm(test_dataloader):
             model.zero_grad()
-            H, A1, A2, Y, V, keys = sample 
-            H, A1, A2, Y, V = H.to(device), A1.to(device), A2.to(device),\
-                            Y.to(device), V.to(device)
+            H, A1, A2, M, S, Y, V, _ = sample 
+            H, A1, A2, M, S, Y, V = H.to(device), A1.to(device), A2.to(device),\
+                                M.to(device), S.to(device), Y.to(device), V.to(device)
             
             #train neural network
-            pred = model.train_model((H, A1, A2, V))
+            pred, attn_loss = model.train_model((H, A1, A2, V), (M, S))
 
-            loss = loss_fn(pred, Y) 
+            loss = loss_fn(pred, Y) + attn_loss
             
             #collect loss, true label and predicted label
             test_losses.append(loss.data.cpu().numpy())
             test_true.append(Y.data.cpu().numpy())
             test_pred.append(pred.data.cpu().numpy())
-
-            H, A1, A2, Y, V = H.to("cpu"), A1.to("cpu"), A2.to("cpu"),\
-                                Y.to("cpu"), V.to("cpu")
             
         train_losses = np.mean(np.array(train_losses))
         test_losses = np.mean(np.array(test_losses))

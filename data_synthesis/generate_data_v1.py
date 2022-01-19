@@ -120,10 +120,12 @@ def add_random_edges(current_graph, NE, min_edges=61, max_edges=122, nuprobabili
             if len(unconnected)==0:
                 break
             new = choice(unconnected)
+            old = choice(connected)
             edge_label = np.random.randint(0, NE)
 
             # for visualise only
-            current_graph.add_edges_from([(choice(connected), new, {'label': edge_label, 'color': 'blue'})])
+            current_graph.add_edges_from([(old, new, {'label': edge_label})])
+            current_graph.nodes[old]["modified"] = True
             # book-keeping, in case both add and remove done in same cycle
             unconnected.remove(new)
             connected.append(new)
@@ -134,8 +136,12 @@ def add_random_edges(current_graph, NE, min_edges=61, max_edges=122, nuprobabili
         num_edges = np.random.randint(min_edges, max_edges+1)
 
         while current_graph.number_of_edges() < num_edges:
+            old_1 = choice(connected)
+            old_2 = choice(connected)
             edge_label = np.random.randint(0, NE)
-            current_graph.add_edges_from([(choice(connected), choice(connected), {'label': edge_label, 'color': 'blue'})])
+            current_graph.add_edges_from([(old_1, old_2, {'label': edge_label})])
+            current_graph.nodes[old_1]["modified"] = True
+            current_graph.nodes[old_2]["modified"] = True
 
     return current_graph
 
@@ -148,7 +154,7 @@ def add_random_nodes(graph, num_nodes, number_label_node, number_label_edge, min
     added_nodes = []
     for i in range(number_of_possible_nodes_to_add):
         node_label = np.random.randint(0, number_label_node)
-        added_nodes.append((node_id, {'label': node_label}))
+        added_nodes.append((node_id, {'label': node_label, 'modified': True}))
         node_id += 1
 
     # add all nodes to current graph
@@ -171,6 +177,7 @@ def random_modify(graph, NN, NE):
                 new_label = np.random.randint(0, NN)
 
             graph.nodes[chose_node]["label"] = new_label
+            graph.nodes[chose_node]["modified"] = True
 
         elif modify_type == 1:
             chose_edge = np.random.choice(graph.nodes, size=2, replace=False)
@@ -183,6 +190,8 @@ def random_modify(graph, NN, NE):
                 new_label = np.random.randint(0, NE)
 
             graph[chose_edge[0]][chose_edge[1]]["label"] = new_label
+            graph.nodes[chose_edge[0]]["modified"] = True
+            graph.nodes[chose_edge[1]]["modified"] = True
 
         num_steps -= 1
 
@@ -213,6 +222,9 @@ def generate_noniso_subgraph(graph, no_of_nodes, avg_subgraph_size,
             if node_ratio > 1:
                 node_ratio = 1
             iteration = 0
+
+    for nid in subgraph.nodes:
+        subgraph.nodes[nid]["modified"] = False
 
     if subgraph.number_of_nodes() > no_of_nodes:
         subgraph = remove_random_nodes(subgraph, no_of_nodes)
@@ -343,6 +355,7 @@ def save_per_source(graph_id, H, iso_subgraphs, noniso_subgraphs, dataset_path):
     iso_subgraph_file = os.path.join(subgraph_path, "iso_subgraphs.lg")
     noniso_subgraph_file = os.path.join(subgraph_path, "noniso_subgraphs.lg")
     iso_subgraph_mapping_file = os.path.join(subgraph_path, "iso_subgraphs_mapping.lg")
+    noniso_subgraph_mapping_file = os.path.join(subgraph_path, "noniso_subgraphs_mapping.lg")
 
     isf = open(iso_subgraph_file, "w", encoding="utf-8")
     ismf = open(iso_subgraph_mapping_file, "w", encoding="utf-8")
@@ -366,12 +379,16 @@ def save_per_source(graph_id, H, iso_subgraphs, noniso_subgraphs, dataset_path):
     ismf.close()
 
     nisf = open(noniso_subgraph_file, "w", encoding="utf-8")
+    nismf = open(noniso_subgraph_mapping_file, "w", encoding="utf-8")
     for subgraph_id, S in enumerate(noniso_subgraphs):
         nisf.write('t # {0}\n'.format(subgraph_id))
+        nismf.write('t # {0}\n'.format(subgraph_id))
         node_mapping = {}
 
         for node_idx, node_emb in enumerate(S.nodes):
             nisf.write('v {} {}\n'.format(node_idx, S.nodes[node_emb]['label']))
+            if not S.nodes[node_emb]['modified']:
+                nismf.write('v {} {}\n'.format(node_idx, node_emb))
             node_mapping[node_emb] = node_idx
 
         for edge in S.edges:
@@ -380,9 +397,11 @@ def save_per_source(graph_id, H, iso_subgraphs, noniso_subgraphs, dataset_path):
             nisf.write('e {} {} {}\n'.format(edge_0, edge_1, S.edges[(edge[0], edge[1])]['label']))
     
     nisf.close()
+    nismf.close()
 
 def main(config_file, is_continue):
     seed(42)
+    np.random.seed(42)
     dataset_path = os.path.join("datasets", 
                    os.path.basename(config_file).split(".")[0])
     ensure_path(dataset_path)

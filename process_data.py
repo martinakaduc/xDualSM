@@ -51,13 +51,39 @@ def read_graphs(database_file_name):
 
     return graphs
 
+def read_mapping(filename):
+    mapping = {}
+    with open(filename, 'r', encoding='utf-8') as f:
+        lines = [line.strip() for line in f.readlines()]
+        tmapping, graph_cnt = None, 0
+        for i, line in enumerate(lines):
+            cols = line.split(' ')
+            if cols[0] == 't':
+                if tmapping is not None:
+                    mapping[graph_cnt] = tmapping
+                    
+                if cols[-1] == '-1':
+                    break
+
+                tmapping = []
+                graph_cnt = int(cols[2])
+
+            elif cols[0] == 'v':
+                tmapping.append((int(cols[1]), int(cols[2])))
+
+        if tmapping is not None:
+            mapping[graph_cnt] = tmapping
+
+    return mapping
+
 def load_graph_data(data_dir, source_id):
     
     source_graph = read_graphs("%s/%s/source.lg" % (data_dir, source_id))[int(source_id)]
     iso_subgraphs = read_graphs("%s/%s/iso_subgraphs.lg" % (data_dir, source_id))
     noniso_subgraphs = read_graphs("%s/%s/noniso_subgraphs.lg" % (data_dir, source_id))
-
-    return source_graph, iso_subgraphs, noniso_subgraphs
+    iso_subgraphs_mapping = read_mapping("%s/%s/iso_subgraphs_mapping.lg" % (data_dir, source_id))
+    noniso_subgraphs_mapping = read_mapping("%s/%s/noniso_subgraphs_mapping.lg" % (data_dir, source_id))
+    return source_graph, iso_subgraphs, noniso_subgraphs, iso_subgraphs_mapping, noniso_subgraphs_mapping
 
 # %%
 import pickle
@@ -66,15 +92,16 @@ from tqdm import tqdm
 # Load and save
 def load_dataset(data_dir, list_source, save_dir):
     for source_id in tqdm(list_source):
-        graph, iso_subgraphs, noniso_subgraphs = load_graph_data(data_dir, source_id)
-
+        graph, iso_subgraphs, noniso_subgraphs, \
+            iso_subgraphs_mapping, noniso_subgraphs_mapping = load_graph_data(data_dir, source_id)
+        
         for key, data in iso_subgraphs.items():
             with open("%s/%s_%d_iso" % (save_dir, source_id, key), 'wb') as f:
-                pickle.dump([data, graph], f)
+                pickle.dump([data, graph, iso_subgraphs_mapping[key]], f)
         
         for key, data in noniso_subgraphs.items():
             with open("%s/%s_%d_non" % (save_dir, source_id, key), 'wb') as f:
-                pickle.dump([data, graph], f)
+                pickle.dump([data, graph, noniso_subgraphs_mapping[key]], f)
 
 # Load data
 if not os.path.exists(data_proccessed_dir):
