@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from utils import *
 
 class GAT_gate(torch.nn.Module):
-    def __init__(self, n_in_feature, n_out_feature, gpu=False):
+    def __init__(self, n_in_feature, n_out_feature, nhop, gpu=False):
         super(GAT_gate, self).__init__()
         self.W = nn.Linear(n_in_feature, n_out_feature)
         #self.A = nn.Parameter(torch.Tensor(n_out_feature, n_out_feature))
@@ -16,10 +16,12 @@ class GAT_gate(torch.nn.Module):
         if gpu > 0:
             self.zeros = self.zeros.cuda()
 
+        self.nhop = nhop
+
     def forward(self, x, adj, get_attention=False):
         h = self.W(x)
-        batch_size = h.size()[0]
-        N = h.size()[1]
+        # batch_size = h.size()[0]
+        # N = h.size()[1]
         e = torch.einsum('ijl,ikl->ijk', (torch.matmul(h,self.A), h))
         e = e + e.permute((0,2,1))
         # zero_vec = -9e15*torch.ones_like(e)
@@ -28,10 +30,13 @@ class GAT_gate(torch.nn.Module):
         #attention = F.dropout(attention, self.dropout, training=self.training)
         #h_prime = torch.matmul(attention, h)
         attention = attention*adj
-        h_prime = F.relu(torch.einsum('aij,ajk->aik',(attention, h)))
-       
-        coeff = torch.sigmoid(self.gate(torch.cat([x,h_prime], -1))).repeat(1,1,x.size(-1))
-        retval = coeff*x+(1-coeff)*h_prime
+
+        z = h
+        for _ in range(self.nhop):
+            az = F.relu(torch.einsum('aij,ajk->aik',(attention, z)))
+            coeff = torch.sigmoid(self.gate(torch.cat([x,az], -1))).repeat(1,1,x.size(-1))
+            z = coeff * x + (1 - coeff) * az
+
         if get_attention:
-            return retval, attention
-        return retval
+            return z, attention
+        return z
