@@ -17,7 +17,7 @@ class gnn(torch.nn.Module):
 
 
         self.layers1 = [d_graph_layer for i in range(n_graph_layer+1)]
-        self.gconv1 = nn.ModuleList([GAT_gate(self.layers1[i], self.layers1[i+1], args.nhop, args.ngpu>0) 
+        self.gconv1 = nn.ModuleList([GAT_gate(self.layers1[i], self.layers1[i+1], i + 1, args.ngpu>0) 
                                     for i in range(len(self.layers1)-1)]) 
         
         self.FC = nn.ModuleList([nn.Linear(self.layers1[-1], d_FC_layer) if i==0 else
