@@ -32,12 +32,9 @@ class GAT_gate(torch.nn.Module):
         attention = attention*adj
 
         z = h
-        az = F.relu(torch.einsum('aij,ajk->aik',(attention, z)))
-        coeff = torch.sigmoid(self.gate(torch.cat([h, az], -1))).repeat(1, 1, h.size(-1))
-        z = coeff * h + (1 - coeff) * az
-
-        for _ in range(self.nhop-1):
+        for _ in range(self.nhop):
             az = F.relu(torch.einsum('aij,ajk->aik',(attention, z)))
+            coeff = torch.sigmoid(self.gate(torch.cat([h, az], -1))).repeat(1, 1, h.size(-1))
             z = coeff * h + (1 - coeff) * az
 
         if get_attention:
