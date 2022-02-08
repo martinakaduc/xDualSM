@@ -39,7 +39,12 @@ class BaseDataset(Dataset):
         # idx = 0
         key = self.keys[idx]
         with open(os.path.join(self.data_dir, key), 'rb') as f:
-            m1, m2 = pickle.load(f)
+            data = pickle.load(f)
+            if len(data) == 3:
+                m1, m2, mapping = data
+            else:
+                m1, m2 = data
+                mapping = []
 
         # Prepare subgraph
         n1 = m1.number_of_nodes()
@@ -69,6 +74,26 @@ class BaseDataset(Dataset):
         # node indice for aggregation
         valid = np.zeros((n1+n2,))
         valid[:n1] = 1
+
+        # create mapping matrix
+        mapping_matrix = np.zeros_like(agg_adj1)
+        if len(mapping) > 0:
+            mapping = np.array(mapping).T
+            mapping[1] = mapping[1] + n1
+            mapping_matrix[mapping[0], mapping[1]] = 1.0
+            mapping_matrix[mapping[1], mapping[0]] = 1.0
+
+        same_label_matrix = np.zeros_like(agg_adj1)
+        same_label_matrix[:n1,n1:] = np.copy(dm_new)
+        same_label_matrix[n1:,:n1] = np.copy(np.transpose(dm_new))
+
+        # print('+++++++++++++++++++++++++++')
+        # a = np.where(mapping_matrix == 1.0)
+        # b = np.where(same_label_matrix == 1.0)
+        # print("mapping", mapping_matrix.sum((0,1)))
+        # print("samelb", same_label_matrix.sum((0,1)))
+        # print(set(a[0].tolist()).issubset(set(b[0].tolist())))
+        # print(set(a[1].tolist()).issubset(set(b[1].tolist())))
         
         # iso to class
         Y = 1 if 'iso' in key else 0
@@ -81,6 +106,8 @@ class BaseDataset(Dataset):
                   'Y': Y, \
                   'V': valid, \
                   'key': key, \
+                  'mapping': mapping_matrix, \
+                  'same_label': same_label_matrix
                   }
 
         return sample
@@ -107,8 +134,11 @@ def collate_fn(batch):
     H = np.zeros((len(batch), max_natoms, batch[0]['H'].shape[-1]))
     A1 = np.zeros((len(batch), max_natoms, max_natoms))
     A2 = np.zeros((len(batch), max_natoms, max_natoms))
+    M = np.zeros((len(batch), max_natoms, max_natoms))
+    S = np.zeros((len(batch), max_natoms, max_natoms))
     Y = np.zeros((len(batch),))
     V = np.zeros((len(batch), max_natoms))
+
     keys = []
     
     for i in range(len(batch)):
@@ -117,6 +147,8 @@ def collate_fn(batch):
         H[i,:natom] = batch[i]['H']
         A1[i,:natom,:natom] = batch[i]['A1']
         A2[i,:natom,:natom] = batch[i]['A2']
+        M[i,:natom,:natom] = batch[i]['mapping']
+        S[i,:natom,:natom] = batch[i]['same_label']
         Y[i] = batch[i]['Y']
         V[i,:natom] = batch[i]['V']
         keys.append(batch[i]['key'])
@@ -124,8 +156,10 @@ def collate_fn(batch):
     H = torch.from_numpy(H).float()
     A1 = torch.from_numpy(A1).float()
     A2 = torch.from_numpy(A2).float()
+    M = torch.from_numpy(M).float()
+    S = torch.from_numpy(S).float()
     Y = torch.from_numpy(Y).float()
     V = torch.from_numpy(V).float()
     
-    return H, A1, A2, Y, V, keys
+    return H, A1, A2, M, S, Y, V, keys
 
