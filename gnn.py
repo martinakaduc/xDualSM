@@ -13,11 +13,18 @@ class gnn(torch.nn.Module):
         d_graph_layer = args.d_graph_layer
         n_FC_layer = args.n_FC_layer
         d_FC_layer = args.d_FC_layer
-        self.dropout_rate = args.dropout_rate 
+        self.dropout_rate = args.dropout_rate
+        cal_nhop = None
 
+        if args.tatic == "static":
+            cal_nhop = lambda x: args.nhop
+        elif args.tatic == "continous":
+            cal_nhop = lambda x: x + 1
+        elif args.tatic == "jump":
+            cal_nhop = lambda x: 2 * x + 1
 
         self.layers1 = [d_graph_layer for i in range(n_graph_layer+1)]
-        self.gconv1 = nn.ModuleList([GAT_gate(self.layers1[i], self.layers1[i+1], 2 * i + 1, args.ngpu>0) 
+        self.gconv1 = nn.ModuleList([GAT_gate(self.layers1[i], self.layers1[i+1], cal_nhop(i), args.ngpu>0) 
                                     for i in range(len(self.layers1)-1)]) 
         
         self.FC = nn.ModuleList([nn.Linear(self.layers1[-1], d_FC_layer) if i==0 else
@@ -76,6 +83,17 @@ class gnn(torch.nn.Module):
         #note that if you don't use concrete dropout, regularization 1-2 is zero
         return c_hs, self.cal_attn_loss(attention, attn_masking)
 
+    def test_model(self, data):
+        #embede a graph to a vector
+        c_hs, _ = self.embede_graph(data)
+
+        #fully connected NN
+        c_hs = self.fully_connected(c_hs)
+        c_hs = c_hs.view(-1) 
+
+        #note that if you don't use concrete dropout, regularization 1-2 is zero
+        return c_hs
+
     def cal_attn_loss(self, attention, attn_masking):
         mapping, samelb = attn_masking
 
@@ -90,18 +108,5 @@ class gnn(torch.nn.Module):
         return (top / (topabot - top + 1)).sum(0) * self.theta / attention.shape[0]
 
     def get_refined_adjs2(self, data):
-        c_hs, c_adjs1, c_adjs2, c_valid = data
-        c_hs = self.embede(c_hs)
-        c_adjs2 = torch.exp(-torch.pow(c_adjs2-self.mu.expand_as(c_adjs2), 2)/self.dev) + c_adjs1
-
-        for k in range(len(self.gconv1)):
-            c_hs1 = self.gconv1[k](c_hs, c_adjs1)
-            if k==len(self.gconv1)-1:
-                c_hs2, attention = self.gconv1[k](c_hs, c_adjs2, True)
-                return F.normalize(attention)
-            else:
-                c_hs2 = self.gconv1[k](c_hs, c_adjs2)
-            c_hs = c_hs2-c_hs1
-            c_hs = F.dropout(c_hs, p=self.dropout_rate, training=self.training)
-
-        return c_adjs2
+        _, attention = self.embede_graph(data)
+        return attention

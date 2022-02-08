@@ -1,3 +1,8 @@
 __pycache__
 *_iso
 *_non
+*.lg
+log/*/*.txt
+results/*.csv
+save/*.pt
+save/*/*.pt

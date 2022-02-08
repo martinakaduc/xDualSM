@@ -16,13 +16,14 @@ from dataset import BaseDataset, collate_fn, UnderSampler
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--lr", help="learning rate", type=float, default = 0.0001)
-parser.add_argument("--epoch", help="epoch", type=int, default = 50)
+parser.add_argument("--epoch", help="epoch", type=int, default = 30)
 parser.add_argument("--ngpu", help="number of gpu", type=int, default = 1)
 parser.add_argument("--dataset", help="dataset", type=str, default = "tiny")
 parser.add_argument("--batch_size", help="batch_size", type=int, default = 32)
 parser.add_argument("--num_workers", help="number of workers", type=int, default = os.cpu_count())
 parser.add_argument("--embedding_dim", help="node embedding dim aka number of distinct node label", type=int, default = 20)
-parser.add_argument("--nhop", help="number of hops", type=int, default = 3)
+parser.add_argument("--tatic", help="tactic of defining number of hops", type=str, default = "static", choices=["static", "continuos", "jump"])
+parser.add_argument("--nhop", help="number of hops", type=int, default = 1)
 parser.add_argument("--n_graph_layer", help="number of GNN layer", type=int, default = 4)
 parser.add_argument("--d_graph_layer", help="dimension of GNN layer", type=int, default = 140)
 parser.add_argument("--n_FC_layer", help="number of FC layer", type=int, default = 4)
@@ -45,26 +46,26 @@ def main(args):
     data_path = os.path.join(args.data_path, args.dataset)
     args.train_keys = os.path.join(data_path, args.train_keys)
     args.test_keys = os.path.join(data_path, args.test_keys)
-    save_dir = args.save_dir
-    log_dir = args.log_dir
+    save_dir = os.path.join(args.save_dir, "%s_%s_%d" % (args.dataset, args.tatic, args.nhop))
+    log_dir = os.path.join(args.log_dir, "%s_%s_%d" % (args.dataset, args.tatic, args.nhop))
 
-    #make save dir if it doesn't exist
+    # Make save dir if it doesn't exist
     if not os.path.isdir(save_dir):
         os.system('mkdir ' + save_dir)
     if not os.path.isdir(log_dir):
         os.system('mkdir ' + log_dir)
 
-    #read data. data is stored in format of dictionary. Each key has information about protein-ligand complex.
+    # Read data. data is stored in format of dictionary. Each key has information about protein-ligand complex.
     with open (args.train_keys, 'rb') as fp:
         train_keys = pickle.load(fp)
     with open (args.test_keys, 'rb') as fp:
         test_keys = pickle.load(fp)
 
-    #print simple statistics about dude data and pdbbind data
+    # Print simple statistics about dude data and pdbbind data
     print (f'Number of train data: {len(train_keys)}')
     print (f'Number of test data: {len(test_keys)}')
 
-    #initialize model
+    # Initialize model
     if args.ngpu > 0:
         cmd = utils.set_cuda_visible_device(args.ngpu)
         os.environ['CUDA_VISIBLE_DEVICES']=cmd[:-1]
@@ -74,7 +75,7 @@ def main(args):
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = utils.initialize_model(model, device, load_save_file=args.ckpt)
 
-    #train and test dataset
+    # Train and test dataset
     train_dataset = BaseDataset(train_keys, data_path, embedding_dim=args.embedding_dim)
     test_dataset = BaseDataset(test_keys, data_path, embedding_dim=args.embedding_dim)
 
@@ -88,28 +89,28 @@ def main(args):
     test_dataloader = DataLoader(test_dataset, args.batch_size, \
         shuffle=False, num_workers = args.num_workers, collate_fn=collate_fn)
 
-    #optimizer
+    # Optimizer
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
-    #loss function
+    # Loss function
     loss_fn = nn.BCELoss()
 
-    # logging file
+    # Logging file
     log_file = open(os.path.join(log_dir, "%s_trace.txt"%args.dataset), "w", encoding="utf-8")
-    log_file.write("epoch\ttrain_losses\ttest_losses\ttrain_roc\ttest_roc\ttime\n")
+    log_file.write("epoch\ttrain_losses\ttest_losses\ttrain_roc\ttest_roc\ttotal_time\ttest_time\n")
 
     for epoch in range(num_epochs):
         print("EPOCH", epoch)
         st = time.time()
-        #collect losses of each iteration
+        # Collect losses of each iteration
         train_losses = [] 
         test_losses = [] 
 
-        #collect true label of each iteration
+        # Collect true label of each iteration
         train_true = []
         test_true = []
         
-        #collect predicted label of each iteration
+        # Collect predicted label of each iteration
         train_pred = []
         test_pred = []
         
@@ -120,35 +121,39 @@ def main(args):
             H, A1, A2, M, S, Y, V = H.to(device), A1.to(device), A2.to(device),\
                                 M.to(device), S.to(device), Y.to(device), V.to(device)
             
-            #train neural network
+            # Train neural network
             pred, attn_loss= model.train_model((H, A1, A2, V), (M, S))
 
             loss = loss_fn(pred, Y) + attn_loss
             loss.backward()
             optimizer.step()
             
-            #collect loss, true label and predicted label
+            # Collect loss, true label and predicted label
             train_losses.append(loss.data.cpu().numpy())
             train_true.append(Y.data.cpu().numpy())
             train_pred.append(pred.data.cpu().numpy())
         
         model.eval()
+        st_eval = time.time()
+
         for sample in tqdm(test_dataloader):
             model.zero_grad()
             H, A1, A2, M, S, Y, V, _ = sample 
             H, A1, A2, M, S, Y, V = H.to(device), A1.to(device), A2.to(device),\
                                 M.to(device), S.to(device), Y.to(device), V.to(device)
             
-            #train neural network
+            # Test neural network
             pred, attn_loss = model.train_model((H, A1, A2, V), (M, S))
 
             loss = loss_fn(pred, Y) + attn_loss
             
-            #collect loss, true label and predicted label
+            # Collect loss, true label and predicted label
             test_losses.append(loss.data.cpu().numpy())
             test_true.append(Y.data.cpu().numpy())
             test_pred.append(pred.data.cpu().numpy())
             
+        end = time.time()
+
         train_losses = np.mean(np.array(train_losses))
         test_losses = np.mean(np.array(test_losses))
         
@@ -161,12 +166,11 @@ def main(args):
         train_roc = roc_auc_score(train_true, train_pred) 
         test_roc = roc_auc_score(test_true, test_pred)
         
-        end = time.time()
         print("%s\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f" \
-        %(epoch, train_losses, test_losses, train_roc, test_roc, end-st))
+        %(epoch, train_losses, test_losses, train_roc, test_roc, end-st, end-st_eval))
 
         log_file.write("%s\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\n" \
-        %(epoch, train_losses, test_losses, train_roc, test_roc, end-st))
+        %(epoch, train_losses, test_losses, train_roc, test_roc, end-st, end-st_eval))
 
         name = save_dir + '/save_'+str(epoch)+'.pt'
         torch.save(model.state_dict(), name)

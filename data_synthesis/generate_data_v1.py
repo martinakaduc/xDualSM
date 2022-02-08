@@ -5,7 +5,7 @@ import numpy as np
 import networkx as nx
 
 from tqdm import tqdm
-from random import choice, seed
+from random import choice, seed, shuffle
 from multiprocessing import Process
 
 def parse_args():
@@ -197,11 +197,11 @@ def random_modify(graph, NN, NE):
 
     return graph
 
-def generate_noniso_subgraph(graph, no_of_nodes, avg_subgraph_size,
+def generate_noniso_subgraph(graph, no_of_nodes,
                               avg_degree, std_degree,
                               number_label_node, number_label_edge):
     graph_nodes = graph.number_of_nodes()
-    node_ratio = avg_subgraph_size / graph_nodes
+    node_ratio = no_of_nodes / graph_nodes
     if node_ratio > 1:
         node_ratio = 1
 
@@ -249,12 +249,12 @@ def generate_subgraphs(graph, number_subgraph_per_source,
 
     for _ in tqdm(range(number_subgraph_per_source)):
         # no_of_nodes = int(np.random.normal(avg_subgraph_size, std_subgraph_size))
-        no_of_nodes = np.random.randint(2, graph.number_of_nodes()+1)
+        no_of_nodes = np.random.randint(2, avg_subgraph_size + std_subgraph_size + 1)
         prob = np.random.randint(0, 2)
         if prob == 1:
             list_iso_subgraphs.append(generate_iso_subgraph(graph, no_of_nodes, *args, **kwargs))
         else:
-            list_noniso_subgraphs.append(generate_noniso_subgraph(graph, no_of_nodes, avg_subgraph_size, *args, **kwargs))
+            list_noniso_subgraphs.append(generate_noniso_subgraph(graph, no_of_nodes, *args, **kwargs))
 
     return list_iso_subgraphs, list_noniso_subgraphs
 
@@ -364,8 +364,10 @@ def save_per_source(graph_id, H, iso_subgraphs, noniso_subgraphs, dataset_path):
         isf.write('t # {0}\n'.format(subgraph_id))
         ismf.write('t # {0}\n'.format(subgraph_id))
         node_mapping = {}
-
-        for node_idx, node_emb in enumerate(S.nodes):
+        list_nodes = list(S.nodes)
+        shuffle(list_nodes)
+        
+        for node_idx, node_emb in enumerate(list_nodes):
             isf.write('v {} {}\n'.format(node_idx, S.nodes[node_emb]['label']))
             ismf.write('v {} {}\n'.format(node_idx, node_emb))
             node_mapping[node_emb] = node_idx
@@ -384,8 +386,10 @@ def save_per_source(graph_id, H, iso_subgraphs, noniso_subgraphs, dataset_path):
         nisf.write('t # {0}\n'.format(subgraph_id))
         nismf.write('t # {0}\n'.format(subgraph_id))
         node_mapping = {}
+        list_nodes = list(S.nodes)
+        shuffle(list_nodes)
 
-        for node_idx, node_emb in enumerate(S.nodes):
+        for node_idx, node_emb in enumerate(list_nodes):
             nisf.write('v {} {}\n'.format(node_idx, S.nodes[node_emb]['label']))
             if not S.nodes[node_emb]['modified']:
                 nismf.write('v {} {}\n'.format(node_idx, node_emb))
