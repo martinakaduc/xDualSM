@@ -18,7 +18,7 @@ class gnn(torch.nn.Module):
 
         if args.tatic == "static":
             cal_nhop = lambda x: args.nhop
-        elif args.tatic == "continous":
+        elif args.tatic == "cont":
             cal_nhop = lambda x: x + 1
         elif args.tatic == "jump":
             cal_nhop = lambda x: 2 * x + 1
