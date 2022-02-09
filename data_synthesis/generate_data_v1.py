@@ -46,6 +46,8 @@ def generate_iso_subgraph(graph, no_of_nodes,
     if node_ratio > 1:
         node_ratio = 1
 
+    min_edges = int(no_of_nodes * (avg_degree - std_degree) / 2)
+    max_edges = int(no_of_nodes * (avg_degree + std_degree) / 2)
     subgraph = None
     iteration = 0
 
@@ -66,6 +68,8 @@ def generate_iso_subgraph(graph, no_of_nodes,
     if high > 0:
         modify_times = np.random.randint(0, high)
         for _ in range(modify_times):
+            if subgraph.number_of_edges() <= min_edges:
+                break
             subgraph = remove_random_edge(subgraph)
 
     return subgraph
@@ -96,7 +100,7 @@ def remove_random_edge(graph):
 
     return new_graph
 
-def add_random_edges(current_graph, NE, min_edges=61, max_edges=122, nuprobability_of_new_connection=1):
+def add_random_edges(current_graph, NE, min_edges=61, max_edges=122):
     """
     randomly adds edges between nodes with no existing edges.
     based on: https://stackoverflow.com/questions/42591549/add-and-delete-a-random-edge-in-networkx
@@ -136,8 +140,9 @@ def add_random_edges(current_graph, NE, min_edges=61, max_edges=122, nuprobabili
         num_edges = np.random.randint(min_edges, max_edges+1)
 
         while current_graph.number_of_edges() < num_edges:
-            old_1 = choice(connected)
-            old_2 = choice(connected)
+            old_1, old_2 = np.random.choice(connected, 2, replace=False)
+            if current_graph.has_edge(old_1, old_2):
+                old_1, old_2 = np.random.choice(connected, 2, replace=False)
             edge_label = np.random.randint(0, NE)
             current_graph.add_edges_from([(old_1, old_2, {'label': edge_label})])
             current_graph.nodes[old_1]["modified"] = True
@@ -145,11 +150,11 @@ def add_random_edges(current_graph, NE, min_edges=61, max_edges=122, nuprobabili
 
     return current_graph
 
-def add_random_nodes(graph, num_nodes, number_label_node, number_label_edge, min_edges, max_edges):
+def add_random_nodes(graph, num_nodes, id_node_start, number_label_node, number_label_edge, min_edges, max_edges):
     graph_nodes = graph.number_of_nodes()
     number_of_possible_nodes_to_add = num_nodes - graph_nodes
 
-    node_id = graph_nodes  # start node_id from the number of nodes already in the common graph (note that the node ids are numbered from 0)
+    node_id = id_node_start  # start node_id from the number of nodes already in the common graph (note that the node ids are numbered from 0)
     # so if there were 5 nodes in the common graph (0,1,2,3,4) start adding new nodes from node 5 on wards
     added_nodes = []
     for i in range(number_of_possible_nodes_to_add):
@@ -205,8 +210,8 @@ def generate_noniso_subgraph(graph, no_of_nodes,
     if node_ratio > 1:
         node_ratio = 1
 
-    min_edges = int(no_of_nodes * (avg_degree - std_degree) / 2)
-    max_edges = int(no_of_nodes * (avg_degree + std_degree) / 2)
+    min_edges = int(no_of_nodes * min(no_of_nodes - 1, avg_degree - std_degree) / 2)
+    max_edges = int(no_of_nodes * min(no_of_nodes - 1, avg_degree + std_degree) / 2)
     subgraph = None
     iteration = 0
 
@@ -229,7 +234,9 @@ def generate_noniso_subgraph(graph, no_of_nodes,
     if subgraph.number_of_nodes() > no_of_nodes:
         subgraph = remove_random_nodes(subgraph, no_of_nodes)
     elif subgraph.number_of_nodes() < no_of_nodes:
-        subgraph = add_random_nodes(subgraph, no_of_nodes, number_label_node, number_label_edge, min_edges, max_edges)
+        subgraph = add_random_nodes(subgraph, no_of_nodes, graph_nodes,
+                                    number_label_node, number_label_edge, 
+                                    min_edges, max_edges)
 
     high = subgraph.number_of_edges() - subgraph.number_of_nodes() + 2
     if high > 0:
