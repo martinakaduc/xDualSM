@@ -249,7 +249,8 @@ def generate_subgraphs(graph, number_subgraph_per_source,
 
     for _ in tqdm(range(number_subgraph_per_source)):
         # no_of_nodes = int(np.random.normal(avg_subgraph_size, std_subgraph_size))
-        no_of_nodes = np.random.randint(2, avg_subgraph_size + std_subgraph_size + 1)
+        no_of_nodes = np.random.randint(2, 
+                      max(graph.number_of_nodes() + 1, avg_subgraph_size + std_subgraph_size + 1))
         prob = np.random.randint(0, 2)
         if prob == 1:
             list_iso_subgraphs.append(generate_iso_subgraph(graph, no_of_nodes, *args, **kwargs))
