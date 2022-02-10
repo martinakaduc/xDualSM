@@ -96,8 +96,8 @@ def main(args):
     loss_fn = nn.BCELoss()
 
     # Logging file
-    log_file = open(os.path.join(log_dir, "%s_trace.txt"%args.dataset), "w", encoding="utf-8")
-    log_file.write("epoch\ttrain_losses\ttest_losses\ttrain_roc\ttest_roc\ttotal_time\ttest_time\n")
+    log_file = open(os.path.join(log_dir, "%s_trace.csv"%args.dataset), "w", encoding="utf-8")
+    log_file.write("epoch,train_losses,test_losses,train_roc,test_roc,train_time,test_time\n")
 
     for epoch in range(num_epochs):
         print("EPOCH", epoch)
@@ -166,11 +166,11 @@ def main(args):
         train_roc = roc_auc_score(train_true, train_pred) 
         test_roc = roc_auc_score(test_true, test_pred)
         
-        print("%s\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f" \
-        %(epoch, train_losses, test_losses, train_roc, test_roc, end-st, end-st_eval))
+        print("%d,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f" \
+        %(epoch, train_losses, test_losses, train_roc, test_roc, st_eval-st, end-st_eval))
 
-        log_file.write("%s\t%.3f\t%.3f\t%.3f\t%.3f\t%.3f\n" \
-        %(epoch, train_losses, test_losses, train_roc, test_roc, end-st, end-st_eval))
+        log_file.write("%d,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\n" \
+        %(epoch, train_losses, test_losses, train_roc, test_roc, st_eval-st, end-st_eval))
 
         name = save_dir + '/save_'+str(epoch)+'.pt'
         torch.save(model.state_dict(), name)
