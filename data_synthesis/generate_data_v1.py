@@ -26,8 +26,8 @@ def add_labels(graph, NN, NE):
     nodes = np.array(list(graph.nodes))
     edges = np.array(list(graph.edges))
 
-    node_labels = np.random.randint(0, NN, len(nodes)).tolist()
-    edge_labels = np.random.randint(0, NE, len(edges)).tolist()
+    node_labels = np.random.randint(1, NN+1, len(nodes)).tolist()
+    edge_labels = np.random.randint(1, NE+1, len(edges)).tolist()
 
     labelled_nodes = [(nodes[k], {'label': node_labels[k], 'color': 'green'}) for k in range(len(nodes))]
     labelled_edges = [(edges[k][0], edges[k][1], {'label': edge_labels[k], 'color': 'green'}) for k in range(len(edges))]
@@ -37,6 +37,12 @@ def add_labels(graph, NN, NE):
     G.add_edges_from(labelled_edges)
 
     return G
+
+def node_match(first_node, second_node):
+        return first_node["label"] == second_node["label"]
+
+def edge_match(first_edge, second_edge):
+        return first_edge["label"] == second_edge["label"]
 
 def generate_iso_subgraph(graph, no_of_nodes,
                            avg_degree, std_degree,
@@ -125,7 +131,7 @@ def add_random_edges(current_graph, NE, min_edges=61, max_edges=122):
                 break
             new = choice(unconnected)
             old = choice(connected)
-            edge_label = np.random.randint(0, NE)
+            edge_label = np.random.randint(1, NE+1)
 
             # for visualise only
             current_graph.add_edges_from([(old, new, {'label': edge_label})])
@@ -143,7 +149,7 @@ def add_random_edges(current_graph, NE, min_edges=61, max_edges=122):
             old_1, old_2 = np.random.choice(connected, 2, replace=False)
             if current_graph.has_edge(old_1, old_2):
                 old_1, old_2 = np.random.choice(connected, 2, replace=False)
-            edge_label = np.random.randint(0, NE)
+            edge_label = np.random.randint(1, NE+1)
             current_graph.add_edges_from([(old_1, old_2, {'label': edge_label})])
             current_graph.nodes[old_1]["modified"] = True
             current_graph.nodes[old_2]["modified"] = True
@@ -158,7 +164,7 @@ def add_random_nodes(graph, num_nodes, id_node_start, number_label_node, number_
     # so if there were 5 nodes in the common graph (0,1,2,3,4) start adding new nodes from node 5 on wards
     added_nodes = []
     for i in range(number_of_possible_nodes_to_add):
-        node_label = np.random.randint(0, number_label_node)
+        node_label = np.random.randint(1, number_label_node+1)
         added_nodes.append((node_id, {'label': node_label, 'modified': True}))
         node_id += 1
 
@@ -172,31 +178,31 @@ def random_modify(graph, NN, NE):
     modify_type = None
 
     while num_steps > 0:
-        modify_type = np.random.randint(0, 2)
+        modify_type = np.random.randint(0, 1)
 
         if modify_type == 0:
             chose_node = np.random.choice(graph.nodes)
             origin_label = graph.nodes[chose_node]["label"]
-            new_label = np.random.randint(0, NN)
+            new_label = np.random.randint(1, NN+1)
             while new_label == origin_label:
-                new_label = np.random.randint(0, NN)
+                new_label = np.random.randint(1, NN+1)
 
             graph.nodes[chose_node]["label"] = new_label
             graph.nodes[chose_node]["modified"] = True
 
-        elif modify_type == 1:
-            chose_edge = np.random.choice(graph.nodes, size=2, replace=False)
-            while not graph.has_edge(*chose_edge):
-                chose_edge = np.random.choice(graph.nodes, size=2, replace=False)
+        # elif modify_type == 1:
+        #     chose_edge = np.random.choice(graph.nodes, size=2, replace=False)
+        #     while not graph.has_edge(*chose_edge):
+        #         chose_edge = np.random.choice(graph.nodes, size=2, replace=False)
 
-            origin_label = graph[chose_edge[0]][chose_edge[1]]["label"]
-            new_label = np.random.randint(0, NE)
-            while new_label == origin_label:
-                new_label = np.random.randint(0, NE)
+        #     origin_label = graph[chose_edge[0]][chose_edge[1]]["label"]
+        #     new_label = np.random.randint(1, NE+1)
+        #     while new_label == origin_label:
+        #         new_label = np.random.randint(1, NE+1)
 
-            graph[chose_edge[0]][chose_edge[1]]["label"] = new_label
-            graph.nodes[chose_edge[0]]["modified"] = True
-            graph.nodes[chose_edge[1]]["modified"] = True
+        #     graph[chose_edge[0]][chose_edge[1]]["label"] = new_label
+        #     graph.nodes[chose_edge[0]]["modified"] = True
+        #     graph.nodes[chose_edge[1]]["modified"] = True
 
         num_steps -= 1
 
@@ -246,18 +252,19 @@ def generate_noniso_subgraph(graph, no_of_nodes,
 
     subgraph = random_modify(subgraph, number_label_node, number_label_edge)
 
+    while graph_matcher.subgraph_is_isomorphic():
+        subgraph = random_modify(subgraph, number_label_node, number_label_edge)
+        graph_matcher = nx.algorithms.isomorphism.GraphMatcher(graph, subgraph, node_match=node_match, edge_match=edge_match)
+
     return subgraph
 
 def generate_subgraphs(graph, number_subgraph_per_source,
-                       avg_subgraph_size, std_subgraph_size,
                        *args, **kwargs):
     list_iso_subgraphs = []
     list_noniso_subgraphs = []
 
     for _ in tqdm(range(number_subgraph_per_source)):
-        # no_of_nodes = int(np.random.normal(avg_subgraph_size, std_subgraph_size))
-        no_of_nodes = np.random.randint(2, 
-                      min(graph.number_of_nodes() + 1, avg_subgraph_size + std_subgraph_size + 1))
+        no_of_nodes = np.random.randint(2, graph.number_of_nodes() + 1)
         prob = np.random.randint(0, 2)
         if prob == 1:
             list_iso_subgraphs.append(generate_iso_subgraph(graph, no_of_nodes, *args, **kwargs))
@@ -268,7 +275,6 @@ def generate_subgraphs(graph, number_subgraph_per_source,
 
 def generate_one_sample(number_subgraph_per_source,
                         avg_source_size, std_source_size,
-                        avg_subgraph_size, std_subgraph_size,
                         avg_degree, std_degree,
                         number_label_node, number_label_edge):
     generated_pattern = None
@@ -288,7 +294,6 @@ def generate_one_sample(number_subgraph_per_source,
     labelled_pattern = add_labels(generated_pattern, number_label_node, number_label_edge)
     
     iso_subgraphs, noniso_subgraphs = generate_subgraphs(labelled_pattern, number_subgraph_per_source,
-                                                         avg_subgraph_size, std_subgraph_size,
                                                          avg_degree, std_degree,
                                                          number_label_node, number_label_edge)
     return labelled_pattern, iso_subgraphs, noniso_subgraphs

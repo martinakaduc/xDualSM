@@ -2,6 +2,7 @@ __pycache__
 *_iso
 *_non
 *.lg
+.DS_Store
 log/*/*.txt
 results/*.csv
 save/*.pt

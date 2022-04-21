@@ -3,8 +3,6 @@
     "number_subgraph_per_source": 2000,
     "avg_source_size": 30,
     "std_source_size": 5,
-    "avg_subgraph_size": 20,
-    "std_subgraph_size": 2,
     "avg_degree": 3.5,
     "std_degree": 0.5,
     "number_label_node": 20,

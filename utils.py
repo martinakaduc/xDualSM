@@ -156,7 +156,7 @@ def initialize_model(model, device, load_save_file=False, gpu=True):
 
 def onehot_encoding(x, max_x):
     onehot_vector = [0] * max_x
-    onehot_vector[x] = 1
+    onehot_vector[x-1] = 1 # label start from 1
     return onehot_vector
 
 def one_of_k_encoding(x, allowable_set):
