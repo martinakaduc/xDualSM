@@ -397,8 +397,8 @@ def generate_dataset(dataset_path, is_continue, number_source, *args, **kwargs):
                                         kwargs=kwargs))
 
     else:
-        num_process = 1
-        # num_process = os.cpu_count()
+        # num_process = 1
+        num_process = os.cpu_count()
         batch_size = int(number_source / num_process) + 1
         start_idx = 0
         stop_idx = start_idx + batch_size
