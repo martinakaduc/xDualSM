@@ -422,7 +422,7 @@ def main(config_file, is_continue):
     seed(42)
     np.random.seed(42)
     dataset_path = os.path.join("datasets", 
-                   os.path.basename(config_file).split(".")[0])
+                   os.path.basename(config_file).split(".")[0], "training")
     ensure_path(dataset_path)
     config = read_config(config_file)
 

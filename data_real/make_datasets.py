@@ -458,7 +458,7 @@ def calculate_ds_attr(graph_ds, total_graph, num_subgraphs):
     return attr_dict
 
 def save_config_for_synthesis(ds_name, configs):
-    configs["number_source"] *= 8
+    configs["number_source"] *= 4
     with open("configs/%s.json" % ds_name, "w") as f:
         json.dump(configs, f, indent=4)
 

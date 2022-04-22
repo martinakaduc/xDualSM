@@ -2,12 +2,10 @@
 # Create sample train and test keys
 import sys
 data_name = sys.argv[1]
-data_dir = "data_synthesis/datasets/%s" % data_name
+data_dir = "data_%s/datasets/%s" % (data_name, sys.argv[2])
 data_proccessed_dir = "data_processed/%s" % data_name
 
 import os
-list_source = os.listdir(data_dir)
-list_source = list(filter(lambda x: os.path.isdir(os.path.join(data_dir, x)), list_source))
 
 # print(list_source[:5])
 
@@ -90,36 +88,50 @@ import pickle
 from tqdm import tqdm
 
 # Load and save
-def load_dataset(data_dir, list_source, save_dir):
+def load_dataset(data_dir, list_source, save_dir, additional_tag=""):
     for source_id in tqdm(list_source):
         graph, iso_subgraphs, noniso_subgraphs, \
             iso_subgraphs_mapping, noniso_subgraphs_mapping = load_graph_data(data_dir, source_id)
         
         for key, data in iso_subgraphs.items():
-            with open("%s/%s_%d_iso" % (save_dir, source_id, key), 'wb') as f:
+            with open("%s/%s_%d_iso_%s" % (save_dir, source_id, key, additional_tag), 'wb') as f:
                 pickle.dump([data, graph, iso_subgraphs_mapping[key]], f)
         
         for key, data in noniso_subgraphs.items():
-            with open("%s/%s_%d_non" % (save_dir, source_id, key), 'wb') as f:
+            with open("%s/%s_%d_non_%s" % (save_dir, source_id, key, additional_tag), 'wb') as f:
                 pickle.dump([data, graph, noniso_subgraphs_mapping[key]], f)
 
 # Load data
 if not os.path.exists(data_proccessed_dir):
         os.mkdir(data_proccessed_dir)
 
+list_source = os.listdir(data_dir)
+list_source = list(filter(lambda x: os.path.isdir(os.path.join(data_dir, x)), list_source))
+
 load_dataset(data_dir, list_source, data_proccessed_dir)
 
 # %%
-# Split train test
-from sklearn.model_selection import train_test_split
-train_source, test_source = train_test_split(list_source, test_size=0.2, random_state=42)
-valid_keys = os.listdir(data_proccessed_dir)
+if "synthesis" in data_dir:
+    # Split train test
+    from sklearn.model_selection import train_test_split
+    train_source, test_source = train_test_split(list_source, test_size=0.2, random_state=42)
+    valid_keys = os.listdir(data_proccessed_dir)
 
-train_keys = [k for k in valid_keys if k.split('_')[0] in train_source]    
-test_keys = [k for k in valid_keys if k.split('_')[0] in test_source]  
+    train_keys = [k for k in valid_keys if k.split('_')[0] in train_source]    
+    test_keys = [k for k in valid_keys if k.split('_')[0] in test_source]  
 
-# print(train_keys[:5])
-# print(test_keys[:5])
+    # print(train_keys[:5])
+    # print(test_keys[:5])
+elif "real" in data_dir:
+    test_keys = os.listdir(data_proccessed_dir)
+    
+    data_dir_train = data_dir + '/train '
+    list_source_train = os.listdir(data_dir_train)
+    list_source_train = list(filter(lambda x: os.path.isdir(os.path.join(data_dir_train, x)), list_source_train))
+
+    load_dataset(data_dir_train, list_source_train, data_proccessed_dir, additional_tag="train")
+
+    train_keys = list(set(os.listdir(data_proccessed_dir)) - set(test_keys))
 
 # Notice that key which has "iso" is isomorphism, otherwise non-isomorphism
 
