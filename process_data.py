@@ -1,13 +1,10 @@
 # %%
 # Create sample train and test keys
 import sys
-data_name = sys.argv[1]
-data_dir = "data_%s/datasets/%s" % (data_name, sys.argv[2])
-data_proccessed_dir = "data_processed/%s" % data_name
-
 import os
 
-# print(list_source[:5])
+data_name = sys.argv[1]
+data_proccessed_dir = "data_processed/%s" % data_name
 
 # %%
 import networkx as nx
@@ -105,13 +102,15 @@ def load_dataset(data_dir, list_source, save_dir, additional_tag=""):
 if not os.path.exists(data_proccessed_dir):
         os.mkdir(data_proccessed_dir)
 
-list_source = os.listdir(data_dir)
-list_source = list(filter(lambda x: os.path.isdir(os.path.join(data_dir, x)), list_source))
-
-load_dataset(data_dir, list_source, data_proccessed_dir)
-
 # %%
-if "synthesis" in data_dir:
+if sys.argv[2] == "synthesis":
+    data_dir = "data_%s/datasets/%s" % (data_name, sys.argv[2])
+
+    list_source = os.listdir(data_dir)
+    list_source = list(filter(lambda x: os.path.isdir(os.path.join(data_dir, x)), list_source))
+
+    load_dataset(data_dir, list_source, data_proccessed_dir)
+
     # Split train test
     from sklearn.model_selection import train_test_split
     train_source, test_source = train_test_split(list_source, test_size=0.2, random_state=42)
@@ -120,17 +119,19 @@ if "synthesis" in data_dir:
     train_keys = [k for k in valid_keys if k.split('_')[0] in train_source]    
     test_keys = [k for k in valid_keys if k.split('_')[0] in test_source]  
 
-    # print(train_keys[:5])
-    # print(test_keys[:5])
-elif "real" in data_dir:
+elif sys.argv[2] == "real":
+    data_dir = "data_%s/datasets/%s" % (sys.argv[2], data_name + "_test")
+    list_source = os.listdir(data_dir)
+    list_source = list(filter(lambda x: os.path.isdir(os.path.join(data_dir, x)), list_source))
+
+    load_dataset(data_dir, list_source, data_proccessed_dir, additional_tag="test")
     test_keys = os.listdir(data_proccessed_dir)
     
-    data_dir_train = data_dir + '/train '
+    data_dir_train = "data_%s/datasets/%s" % (sys.argv[2], data_name + "_train")
     list_source_train = os.listdir(data_dir_train)
     list_source_train = list(filter(lambda x: os.path.isdir(os.path.join(data_dir_train, x)), list_source_train))
 
     load_dataset(data_dir_train, list_source_train, data_proccessed_dir, additional_tag="train")
-
     train_keys = list(set(os.listdir(data_proccessed_dir)) - set(test_keys))
 
 # Notice that key which has "iso" is isomorphism, otherwise non-isomorphism
