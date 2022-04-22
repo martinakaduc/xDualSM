@@ -467,7 +467,6 @@ def process_dataset(path, ds_name, is_continue, num_subgraphs):
 
     source_graphs = separate_graphs(total_graph, transaction_by_nid)
     config = calculate_ds_attr(source_graphs, total_graph, num_subgraphs)
-    save_config_for_synthesis(ds_name, config)                 
 
     del total_graph
     del transaction_by_nid
@@ -482,6 +481,8 @@ def process_dataset(path, ds_name, is_continue, num_subgraphs):
                      is_continue=is_continue,
                      source_graphs=source_graphs,
                       **config)
+
+    save_config_for_synthesis(ds_name, config)                 
 
 if __name__ == '__main__':
     list_datasets = os.listdir(RAW_DATASETS_PATH)
