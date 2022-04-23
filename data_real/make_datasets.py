@@ -256,14 +256,14 @@ def add_random_nodes(graph, num_nodes, id_node_start, number_label_node, number_
     add_random_edges(graph, number_label_edge, min_edges, max_edges)
     return graph
 
-def random_modify(graph, NN, NE):
+def random_modify(graph, NN, NE, graph_nodes, min_edges, max_edges):
     num_steps = np.random.randint(1, graph.number_of_nodes() + graph.number_of_edges())
     modify_type = None
 
     while num_steps > 0:
-        modify_type = np.random.randint(0, 1)
+        modify_type = np.random.randint(0, 3)
 
-        if modify_type == 0:
+        if modify_type == 0: # Change node label
             chose_node = np.random.choice(graph.nodes)
             origin_label = graph.nodes[chose_node]["label"]
             new_label = np.random.randint(1, NN+1)
@@ -286,6 +286,16 @@ def random_modify(graph, NN, NE):
         #     graph[chose_edge[0]][chose_edge[1]]["label"] = new_label
         #     graph.nodes[chose_edge[0]]["modified"] = True
         #     graph.nodes[chose_edge[1]]["modified"] = True
+
+        elif modify_type == 1: # Remove & add random node
+            graph = remove_random_nodes(graph, graph.number_of_nodes()-1)
+            graph = add_random_nodes(graph, graph.number_of_nodes() + 1, graph_nodes,
+                                    NN, NE, 
+                                    min_edges, max_edges)
+
+        elif modify_type == 2: # Remove & add random edge
+            graph = remove_random_edge(graph)
+            graph = add_random_edges(graph, NE, graph.number_of_edges()+1, graph.number_of_edges()+1)
 
         num_steps -= 1
 
@@ -334,10 +344,11 @@ def generate_noniso_subgraph(graph, no_of_nodes,
         for _ in range(modify_times):
             subgraph = remove_random_edge(subgraph)
 
+    subgraph = random_modify(subgraph, number_label_node, number_label_edge, graph_nodes, min_edges, max_edges)
     graph_matcher = nx.algorithms.isomorphism.GraphMatcher(graph, subgraph, node_match=node_match, edge_match=edge_match)
     
     while graph_matcher.subgraph_is_isomorphic():
-        subgraph = random_modify(subgraph, number_label_node, number_label_edge)
+        subgraph = random_modify(subgraph, number_label_node, number_label_edge, graph_nodes, min_edges, max_edges)
         graph_matcher = nx.algorithms.isomorphism.GraphMatcher(graph, subgraph, node_match=node_match, edge_match=edge_match)
 
     return subgraph
