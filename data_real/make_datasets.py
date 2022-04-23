@@ -235,15 +235,12 @@ def add_random_edges(current_graph, NE, min_edges=61, max_edges=122):
             # print('Connected:', connected)
             # print('Unconnected', unconnected
 
-        connected = list(current_graph.nodes())
-        graph_num_edges = current_graph.number_of_edges()
-        num_edges = min(np.random.randint(min_edges, max_edges+1), graph_num_edges*(graph_num_edges-1) / 2)
+        num_edges = np.random.randint(min_edges, max_edges+1)
 
         while current_graph.number_of_edges() < num_edges:
-            # print(current_graph.number_of_edges(), num_edges)
-            old_1, old_2 = np.random.choice(current_graph.nodes(), 2, replace=False)
+            old_1, old_2 = np.random.choice(connected, 2, replace=False)
             while current_graph.has_edge(old_1, old_2):
-                old_1, old_2 = np.random.choice(current_graph.nodes(), 2, replace=False)
+                old_1, old_2 = np.random.choice(connected, 2, replace=False)
             edge_label = np.random.randint(1, NE+1)
             current_graph.add_edges_from([(old_1, old_2, {'label': edge_label})])
             current_graph.nodes[old_1]["modified"] = True
@@ -265,15 +262,15 @@ def add_random_nodes(graph, num_nodes, id_node_start, number_label_node, number_
 
     # add all nodes to current graph
     graph.add_nodes_from(added_nodes)
-    add_random_edges(graph, number_label_edge, min_edges, max_edges)
-    return graph
+    graph = add_random_edges(graph, number_label_edge, min_edges, max_edges)
+    return graph, node_id
 
-def random_modify(graph, NN, NE, graph_nodes, min_edges, max_edges):
+def random_modify(graph, NN, NE, node_start_id, min_edges, max_edges):
     num_steps = np.random.randint(1, graph.number_of_nodes() + graph.number_of_edges())
     modify_type = None
 
     while num_steps > 0:
-        modify_type = np.random.randint(0, 2)
+        modify_type = np.random.randint(0, 3)
 
         if modify_type == 0: # Change node label
             chose_node = np.random.choice(graph.nodes)
@@ -300,20 +297,23 @@ def random_modify(graph, NN, NE, graph_nodes, min_edges, max_edges):
         #     graph.nodes[chose_edge[1]]["modified"] = True
 
         elif modify_type == 1: # Remove & add random node
-            graph = add_random_nodes(graph, graph.number_of_nodes() + 1, graph_nodes,
+            graph, node_start_id = add_random_nodes(graph, graph.number_of_nodes() + 1, node_start_id,
                                     NN, NE, 
                                     min_edges, max_edges)
             graph = remove_random_nodes(graph, graph.number_of_nodes()-1)
 
-        # elif modify_type == 2: # Remove & add random edge
-        #     if graph.number_of_nodes() < 4:
-        #         continue
-        #     graph = add_random_edges(graph, NE, graph.number_of_edges()-1, graph.number_of_edges()-1)
-        #     graph = remove_random_edge(graph)
+        elif modify_type == 2: # Remove & add random edge
+            n_nodes = graph.number_of_nodes()
+            n_edges = graph.number_of_edges()
+
+            if n_nodes * (n_nodes - 1) / 2 < n_edges:
+                graph = add_random_edges(graph, NE, n_edges+1, n_edges+1)
+            if graph.number_of_edges() >= n_nodes:
+                graph = remove_random_edge(graph)
 
         num_steps -= 1
 
-    return graph
+    return graph, node_start_id
 
 def generate_noniso_subgraph(graph, no_of_nodes,
                               avg_degree, std_degree,
@@ -348,7 +348,7 @@ def generate_noniso_subgraph(graph, no_of_nodes,
     if subgraph.number_of_nodes() > no_of_nodes:
         subgraph = remove_random_nodes(subgraph, no_of_nodes)
     elif subgraph.number_of_nodes() < no_of_nodes:
-        subgraph = add_random_nodes(subgraph, no_of_nodes, graph_nodes,
+        subgraph, graph_nodes = add_random_nodes(subgraph, no_of_nodes, graph_nodes,
                                     number_label_node, number_label_edge, 
                                     min_edges, max_edges)
 
@@ -358,11 +358,11 @@ def generate_noniso_subgraph(graph, no_of_nodes,
         for _ in range(modify_times):
             subgraph = remove_random_edge(subgraph)
 
-    subgraph = random_modify(subgraph, number_label_node, number_label_edge, graph_nodes, min_edges, max_edges)
+    subgraph, graph_nodes = random_modify(subgraph, number_label_node, number_label_edge, graph_nodes, min_edges, max_edges)
     graph_matcher = nx.algorithms.isomorphism.GraphMatcher(graph, subgraph, node_match=node_match, edge_match=edge_match)
-    
+
     while graph_matcher.subgraph_is_isomorphic():
-        subgraph = random_modify(subgraph, number_label_node, number_label_edge, graph_nodes, min_edges, max_edges)
+        subgraph, graph_nodes = random_modify(subgraph, number_label_node, number_label_edge, graph_nodes, min_edges, max_edges)
         graph_matcher = nx.algorithms.isomorphism.GraphMatcher(graph, subgraph, node_match=node_match, edge_match=edge_match)
 
     return subgraph
@@ -514,7 +514,7 @@ if __name__ == '__main__':
     args = parse_args()
 
     for dataset in list_datasets:
-        if dataset != "COX2": continue # TO_TEST
+        # if dataset != "COX2": continue # TO_TEST
 
         print("PROCESSING DATASET:", dataset)
         process_dataset(path=RAW_DATASETS_PATH, ds_name=dataset, is_continue=args.cont, num_subgraphs=args.num_subgraphs)
