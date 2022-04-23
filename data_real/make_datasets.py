@@ -227,7 +227,7 @@ def add_random_edges(current_graph, NE, min_edges=61, max_edges=122):
             if not connected:
                 unconnected.remove(old)
                 connected.append(old)
-                
+
             unconnected.remove(new)
             connected.append(new)
 
@@ -304,7 +304,7 @@ def random_modify(graph, NN, NE, graph_nodes, min_edges, max_edges):
 
         elif modify_type == 2: # Remove & add random edge
             graph = remove_random_edge(graph)
-            graph = add_random_edges(graph, NE, min_edges, max_edges)
+            graph = add_random_edges(graph, NE, graph.number_of_edges()-1, graph.number_of_edges()-1)
 
         num_steps -= 1
 
