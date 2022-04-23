@@ -125,7 +125,7 @@ def add_random_edges(current_graph, NE, min_edges=61, max_edges=122):
         unconnected = [j for j in current_graph.nodes if not j in connected]
         # print('Connected:', connected)
         # print('Unconnected', unconnected)
-        is_connected = False
+        is_connected = nx.is_connected(current_graph)
         while not is_connected:  # randomly add edges until the graph is connected
             if len(unconnected)==0:
                 break
