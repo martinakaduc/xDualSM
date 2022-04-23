@@ -447,8 +447,9 @@ def generate_dataset(dataset_path, is_continue, number_source, *args, **kwargs):
 def separate_graphs(total_graph, transaction_by_id):
     separeted_graphs = {}
     for gid in transaction_by_id:
-        separeted_graphs[gid] = total_graph.subgraph(transaction_by_id[gid])
-
+        G = total_graph.subgraph(transaction_by_id[gid])
+        mapping = dict(zip(G, range(G.number_of_nodes())))
+        separeted_graphs[gid] = nx.relabel_nodes(G, mapping)
     return separeted_graphs
 
 def calculate_ds_attr(graph_ds, total_graph, num_subgraphs):
