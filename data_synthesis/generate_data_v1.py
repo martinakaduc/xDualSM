@@ -212,7 +212,7 @@ def random_modify(graph, NN, NE, graph_nodes, min_edges, max_edges):
 
         elif modify_type == 2: # Remove & add random edge
             graph = remove_random_edge(graph)
-            graph = add_random_edges(graph, NE, graph.number_of_edges()+1, graph.number_of_edges()+1)
+            graph = add_random_edges(graph, NE, min_edges, max_edges)
 
         num_steps -= 1
 
