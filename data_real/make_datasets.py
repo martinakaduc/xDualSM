@@ -214,7 +214,7 @@ def add_random_edges(current_graph, NE, min_edges=61, max_edges=122):
                 break
             new = choice(unconnected)
             old = choice(connected)
-            edge_label = np.random.randint(0, NE)
+            edge_label = np.random.randint(1, NE+1)
 
             # for visualise only
             current_graph.add_edges_from([(old, new, {'label': edge_label})])
@@ -500,7 +500,7 @@ if __name__ == '__main__':
     args = parse_args()
 
     for dataset in list_datasets:
-        # if dataset != "COX2": continue # TO_TEST
+        if dataset != "COX2": continue # TO_TEST
 
         print("PROCESSING DATASET:", dataset)
         process_dataset(path=RAW_DATASETS_PATH, ds_name=dataset, is_continue=args.cont, num_subgraphs=args.num_subgraphs)
