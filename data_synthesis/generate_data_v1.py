@@ -114,7 +114,6 @@ def add_random_edges(current_graph, NE, min_edges=61, max_edges=122):
     :return: None
     """
     if current_graph:
-        new_edges = []
         connected = []
         for i in current_graph.nodes:
             # find the other nodes this one is connected to
@@ -130,15 +129,25 @@ def add_random_edges(current_graph, NE, min_edges=61, max_edges=122):
             if len(unconnected)==0:
                 break
             new = choice(unconnected)
-            old = choice(connected)
+            if not connected:
+                old = choice(unconnected)
+                while old == new:
+                    old = choice(unconnected)
+            else:
+                old = choice(connected)
             edge_label = np.random.randint(1, NE+1)
 
             # for visualise only
             current_graph.add_edges_from([(old, new, {'label': edge_label})])
             current_graph.nodes[old]["modified"] = True
             # book-keeping, in case both add and remove done in same cycle
+            if not connected:
+                unconnected.remove(old)
+                connected.append(old)
+                
             unconnected.remove(new)
             connected.append(new)
+
             is_connected = nx.is_connected(current_graph)
             # print('Connected:', connected)
             # print('Unconnected', unconnected
