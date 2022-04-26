@@ -7,6 +7,7 @@ import numpy as np
 from tqdm import tqdm
 from random import choice, seed, shuffle
 from multiprocessing import Process
+import sys
 
 RAW_DATASETS_PATH = "./raw_datasets"
 
@@ -515,7 +516,7 @@ if __name__ == '__main__':
     args = parse_args()
 
     for dataset in list_datasets:
-        # if dataset != "COX2": continue # TO_TEST
+        if dataset != sys.argv[1]: continue # TO_TEST
 
         print("PROCESSING DATASET:", dataset)
         process_dataset(path=RAW_DATASETS_PATH, ds_name=dataset, is_continue=args.cont, num_subgraphs=args.num_subgraphs)
