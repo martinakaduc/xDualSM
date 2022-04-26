@@ -15,6 +15,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Synthetic graphs')
     parser.add_argument("--cont", default=False, type=bool, help="Continue generating")
     parser.add_argument("--num_subgraphs", default=2000, type=int, help="Number of subgraphs")
+    parser.add_argument("--ds", default="", type=str, help="Dataset name")
     return parser.parse_args()
 
 def read_config(config_file):
@@ -516,7 +517,7 @@ if __name__ == '__main__':
     args = parse_args()
 
     for dataset in list_datasets:
-        if dataset != sys.argv[1]: continue # TO_TEST
+        if dataset != args.ds: continue # TO_TEST
 
         print("PROCESSING DATASET:", dataset)
         process_dataset(path=RAW_DATASETS_PATH, ds_name=dataset, is_continue=args.cont, num_subgraphs=args.num_subgraphs)
