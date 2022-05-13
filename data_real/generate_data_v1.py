@@ -313,7 +313,7 @@ def generate_one_sample(number_subgraph_per_source,
         degree = np.random.normal(avg_degree, std_degree)
     probability_for_edge_creation = degree / (no_of_nodes - 1)
 
-    while generated_pattern is None or generated_pattern.is_empty() or not nx.is_connected(
+    while generated_pattern is None or nx.is_empty(generated_pattern) or not nx.is_connected(
                 generated_pattern):  # make sure the generated graph is connected
         generated_pattern = nx.erdos_renyi_graph(no_of_nodes, probability_for_edge_creation, directed=False)
         iteration += 1
