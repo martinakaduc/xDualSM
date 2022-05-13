@@ -155,9 +155,9 @@ def add_random_edges(current_graph, NE, min_edges=61, max_edges=122):
         num_edges = np.random.randint(min_edges, max_edges+1)
 
         while current_graph.number_of_edges() < num_edges:
-            old_1, old_2 = np.random.choice(connected, 2, replace=False)
+            old_1, old_2 = np.random.choice(current_graph.nodes, 2, replace=False)
             while current_graph.has_edge(old_1, old_2):
-                old_1, old_2 = np.random.choice(connected, 2, replace=False)
+                old_1, old_2 = np.random.choice(current_graph.nodes, 2, replace=False)
             edge_label = np.random.randint(1, NE+1)
             current_graph.add_edges_from([(old_1, old_2, {'label': edge_label})])
             current_graph.nodes[old_1]["modified"] = True
@@ -223,7 +223,7 @@ def random_modify(graph, NN, NE, node_start_id, min_edges, max_edges):
             n_nodes = graph.number_of_nodes()
             n_edges = graph.number_of_edges()
 
-            if n_nodes * (n_nodes - 1) / 2 < n_edges:
+            if n_nodes * (n_nodes - 1) / 2 > n_edges:
                 graph = add_random_edges(graph, NE, n_edges+1, n_edges+1)
             if graph.number_of_edges() >= n_nodes:
                 graph = remove_random_edge(graph)
