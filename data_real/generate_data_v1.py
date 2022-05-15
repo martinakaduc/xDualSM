@@ -309,8 +309,10 @@ def generate_one_sample(number_subgraph_per_source,
     while no_of_nodes < 2:
         no_of_nodes = int(np.random.normal(avg_source_size, std_source_size))
     degree = np.random.normal(avg_degree, std_degree)
-    while degree < 1 or degree > no_of_nodes -1:
-        degree = np.random.normal(avg_degree, std_degree)
+    if degree < 1:
+        degree = 1
+    if degree > no_of_nodes -1:
+        degree = no_of_nodes -1
     probability_for_edge_creation = degree / (no_of_nodes - 1)
 
     while generated_pattern is None or nx.is_empty(generated_pattern) or not nx.is_connected(
