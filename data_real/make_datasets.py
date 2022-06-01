@@ -38,7 +38,7 @@ def read_dataset(path, ds_name):
 
     node_labels = node_labels_file.read().strip().split('\n')
     label_set = set(node_labels)
-    label_mapping = {x: i+1 for i, x in enumerate(label_set)}
+    label_mapping = {x: i+1 for i, x in enumerate(label_set)} # Label start from 1
     node_labels = [(i, {'label':label_mapping[x]}) for i, x in enumerate(node_labels)]
     total_graph.add_nodes_from(node_labels)
 
@@ -451,7 +451,11 @@ def separate_graphs(total_graph, transaction_by_id):
     for gid in transaction_by_id:
         G = total_graph.subgraph(transaction_by_id[gid])
         mapping = dict(zip(G, range(G.number_of_nodes())))
-        separeted_graphs[gid] = nx.relabel_nodes(G, mapping)
+        temp_graph = nx.relabel_nodes(G, mapping)
+        for nid in temp_graph.nodes:
+            temp_graph.nodes[nid]["label"] = nid
+
+        separeted_graphs[gid] = temp_graph
     return separeted_graphs
 
 def calculate_ds_attr(graph_ds, total_graph, num_subgraphs):
