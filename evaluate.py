@@ -15,7 +15,6 @@ from torch.utils.data import DataLoader
 from dataset import BaseDataset, collate_fn, UnderSampler
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--lr", help="learning rate", type=float, default = 0.0001)
 parser.add_argument("--ngpu", help="number of gpu", type=int, default = 1)
 parser.add_argument("--dataset", help="dataset", type=str, default = "tiny")
 parser.add_argument("--batch_size", help="batch_size", type=int, default = 32)
@@ -37,8 +36,6 @@ parser.add_argument("--test_keys", help="test keys", type=str, default='test_key
 
 def main(args):
     #hyper parameters
-    num_epochs = args.epoch
-    lr = args.lr
     ngpu = args.ngpu
     batch_size = args.batch_size
     data_path = os.path.join(args.data_path, args.dataset)
