@@ -89,25 +89,27 @@ def main(args):
 
     test_pred = np.concatenate(np.array(test_pred), 0)
     test_true = np.concatenate(np.array(test_true), 0)
+    result_rows = []
 
-    test_roc = roc_auc_score(test_true, test_pred)
-    test_acc = accuracy_score(test_true, test_pred)
-    test_pre = precision_score(test_true, test_pred)
-    test_rec = recall_score(test_true, test_pred)
-    test_f1s = 2 * test_pre * test_rec / (test_pre + test_rec)
-    test_prc = average_precision_score(test_true, test_pred)
-    test_time = (end - st_eval) / len(test_dataset)
+    for conf_step in [0.5, 0.6, 0.7, 0.8, 0.9, 1]:
+        test_pred_by_conf = test_pred.copy()
+        test_pred_by_conf[test_pred_by_conf < conf_step] = 0
+        test_pred_by_conf[test_pred_by_conf > 0] = 1
+
+        test_roc = roc_auc_score(test_true, test_pred_by_conf)
+        test_acc = accuracy_score(test_true, test_pred_by_conf)
+        test_pre = precision_score(test_true, test_pred_by_conf)
+        test_rec = recall_score(test_true, test_pred_by_conf)
+        test_f1s = 2 * test_pre * test_rec / (test_pre + test_rec)
+        test_prc = average_precision_score(test_true, test_pred_by_conf)
+        test_time = (end - st_eval) / len(test_dataset)
+
+        result_rows.append([test_time, test_roc, test_prc, test_pre, test_rec, test_f1s, test_acc])
     
     with open(os.path.join(result_dir, "%s_result.csv"%args.dataset), "w", encoding="utf-8") as f:
-        f.write("Dataset: %s" % args.dataset)
-        f.write("Execution Time: %f" % test_time)
-        f.write("ROC AUC: %.4f" % test_roc)
-        f.write("PR AUC: %.4f" % test_prc)
-        f.write("Precision: %.4f" % test_pre)
-        f.write("Recall: %.4f" % test_rec)
-        f.write("F1-Score: %.4f" % test_f1s)
-        f.write("Accuracy: %.4f" % test_acc)
-
+        f.write("Execution Time,ROC AUC,PR AUC,Precision,Recall,F1-Score,Accuracy")
+        for row in result_rows:
+            f.write(','.join([str(x) for x in row]))
 
 if __name__ == "__main__":
     args = parser.parse_args()
