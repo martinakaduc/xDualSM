@@ -110,7 +110,7 @@ def main(args):
         f.write("Execution Time,ROC AUC,PR AUC,Precision,Recall,F1-Score,Accuracy\n")
         for row in result_rows:
             f.write(','.join([str(x) for x in row]))
-            f.wrtie('\n')
+            f.write('\n')
 
 if __name__ == "__main__":
     args = parser.parse_args()
