@@ -91,7 +91,7 @@ def main(args):
     test_true = np.concatenate(np.array(test_true), 0)
     result_rows = []
 
-    for conf_step in [0.5, 0.6, 0.7, 0.8, 0.9, 1]:
+    for conf_step in [0.5, 0.6, 0.7, 0.8, 0.9, 0.91, 0.92, 0.93, 0.94, 0.95, 0.96, 0.97, 0.98, 0.99, 1]:
         test_pred_by_conf = test_pred.copy()
         test_pred_by_conf[test_pred_by_conf < conf_step] = 0
         test_pred_by_conf[test_pred_by_conf > 0] = 1
@@ -104,10 +104,10 @@ def main(args):
         test_prc = average_precision_score(test_true, test_pred_by_conf)
         test_time = (end - st_eval) / len(test_dataset)
 
-        result_rows.append([test_time, test_roc, test_prc, test_pre, test_rec, test_f1s, test_acc])
+        result_rows.append([conf_step, test_time, test_roc, test_prc, test_pre, test_rec, test_f1s, test_acc])
     
     with open(os.path.join(result_dir, "%s_result.csv"%args.dataset), "w", encoding="utf-8") as f:
-        f.write("Execution Time,ROC AUC,PR AUC,Precision,Recall,F1-Score,Accuracy\n")
+        f.write("Confident,Execution Time,ROC AUC,PR AUC,Precision,Recall,F1-Score,Accuracy\n")
         for row in result_rows:
             f.write(','.join([str(x) for x in row]))
             f.write('\n')
