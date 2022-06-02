@@ -7,7 +7,7 @@ import numpy as np
 from tqdm import tqdm
 from random import choice, seed, shuffle
 from multiprocessing import Process
-import sys
+from functools import reduce
 
 RAW_DATASETS_PATH = "./raw_datasets"
 
@@ -471,6 +471,7 @@ def calculate_ds_attr(graph_ds, total_graph, num_subgraphs):
     attr_dict = {}
     attr_dict["number_source"] = len(graph_ds)
     list_source_node = [g.number_of_nodes() for _, g in graph_ds.items()]
+    total_label = reduce(lambda x, y: x + [y.nodes[nid]["label"] for nid in y.nodes], graph_ds.values(), [])
     list_source_edge = [g.number_of_edges() for _, g in graph_ds.items()]
 
     mean_size, std_size = np.mean(list_source_node, axis=0), np.std(list_source_node, axis=0)
@@ -482,7 +483,7 @@ def calculate_ds_attr(graph_ds, total_graph, num_subgraphs):
     attr_dict["avg_degree"] = mean_degree
     attr_dict["std_degree"] = std_degree
   
-    total_label = [total_graph.nodes[n]["label"] for n in total_graph.nodes]
+    # total_label = [total_graph.nodes[n]["label"] for n in total_graph.nodes]
     attr_dict["number_label_node"] = len(set(total_label))
     attr_dict["number_label_edge"] = 1 # TO_REMOVE
 
