@@ -52,9 +52,9 @@ def main(args):
     print (f'Number of test data: {len(test_keys)}')
 
     # Initialize model
-    if args.ngpu > 0:
-        cmd = utils.set_cuda_visible_device(args.ngpu)
-        os.environ['CUDA_VISIBLE_DEVICES']=cmd[:-1]
+    # if args.ngpu > 0:
+    #     cmd = utils.set_cuda_visible_device(args.ngpu)
+    #     os.environ['CUDA_VISIBLE_DEVICES']=cmd[:-1]
 
     model = gnn(args)
     print ('Number of parameters: ', sum(p.numel() for p in model.parameters() if p.requires_grad))
