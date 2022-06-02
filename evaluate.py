@@ -16,7 +16,6 @@ from dataset import BaseDataset, collate_fn, UnderSampler
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--lr", help="learning rate", type=float, default = 0.0001)
-parser.add_argument("--epoch", help="epoch", type=int, default = 30)
 parser.add_argument("--ngpu", help="number of gpu", type=int, default = 1)
 parser.add_argument("--dataset", help="dataset", type=str, default = "tiny")
 parser.add_argument("--batch_size", help="batch_size", type=int, default = 32)
@@ -83,7 +82,7 @@ def main(args):
                             M.to(device), S.to(device), Y.to(device), V.to(device)
         
         # Test neural network
-        pred = model.test_model((H, A1, A2, V), (M, S))
+        pred = model.test_model((H, A1, A2, V))
         
         # Collect true label and predicted label
         test_true.append(Y.data.cpu().numpy())
