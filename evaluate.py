@@ -7,7 +7,7 @@ import torch.nn as nn
 import torch
 import time
 import os
-from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, recall_score, average_precision_score
+from sklearn.metrics import roc_auc_score, accuracy_score, precision_score, recall_score, average_precision_score,f1_score
 import argparse
 import time
 from tqdm import tqdm
@@ -100,16 +100,17 @@ def main(args):
         test_acc = accuracy_score(test_true, test_pred_by_conf)
         test_pre = precision_score(test_true, test_pred_by_conf)
         test_rec = recall_score(test_true, test_pred_by_conf)
-        test_f1s = 2 * test_pre * test_rec / (test_pre + test_rec)
+        test_f1s = f1_score(test_true, test_pred_by_conf)
         test_prc = average_precision_score(test_true, test_pred_by_conf)
         test_time = (end - st_eval) / len(test_dataset)
 
         result_rows.append([test_time, test_roc, test_prc, test_pre, test_rec, test_f1s, test_acc])
     
     with open(os.path.join(result_dir, "%s_result.csv"%args.dataset), "w", encoding="utf-8") as f:
-        f.write("Execution Time,ROC AUC,PR AUC,Precision,Recall,F1-Score,Accuracy")
+        f.write("Execution Time,ROC AUC,PR AUC,Precision,Recall,F1-Score,Accuracy\n")
         for row in result_rows:
             f.write(','.join([str(x) for x in row]))
+            f.wrtie('\n')
 
 if __name__ == "__main__":
     args = parser.parse_args()
