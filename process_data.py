@@ -104,7 +104,7 @@ if not os.path.exists(data_proccessed_dir):
 
 # %%
 if sys.argv[2] == "synthesis":
-    data_dir = "data_%s/datasets/%s" % (data_name, sys.argv[2])
+    data_dir = "data_%s/datasets/%s" % (sys.argv[2], data_name)
 
     list_source = os.listdir(data_dir)
     list_source = list(filter(lambda x: os.path.isdir(os.path.join(data_dir, x)), list_source))
