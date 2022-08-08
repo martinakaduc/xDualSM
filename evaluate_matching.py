@@ -157,6 +157,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--ckpt", "-c", help="checkpoint for gnn", type=str, default="model/best_large_30_20.pt")
     parser.add_argument("--dataset", help="dataset", type=str, default = "tiny")
+    parser.add_argument("--num_workers", help="number of workers", type=int, default = os.cpu_count())
     parser.add_argument("--confidence", help="isomorphism threshold", type=float, default = 0.5)
     parser.add_argument("--mapping_threshold", help="mapping threshold", type=float, default = 1e-5)
     parser.add_argument("--ngpu", help="number of gpu", type=int, default = 1)
