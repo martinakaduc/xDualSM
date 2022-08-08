@@ -259,7 +259,7 @@ if __name__ == '__main__':
             results = eval_mapping(gt_mapping, sorted_predict_mapping, pred_mapping)
             list_results.append(results)
 
-        if time.time() - st_eval > 10000:
+        if time.time() - st_eval > 10:
             break
             
     end = time.time()
