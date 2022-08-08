@@ -141,6 +141,7 @@ def eval_mapping(groundtruth, predict_list, predict_prob):
             else:
                 list_acc.append(0)
 
+        print(list_acc)
         acc.append(list_acc)
 
         if groundtruth[sgn] in predict_list[sgn]:
@@ -241,12 +242,12 @@ if __name__ == '__main__':
             for x, y in zip(x_coord, y_coord):
                 if x < y:
                     if y in pred_mapping[x]:
-                        pred_mapping[x][y] = (pred_mapping[x][y] + mapping_pred[x, y])/2
+                        pred_mapping[x][y] = (pred_mapping[x][y] + mapping_pred[x][y])/2
                     else:
                         pred_mapping[x][y] = mapping_pred[x, y] # Subgraph node: Graph node
                 else:
                     if x in pred_mapping[y]:
-                        pred_mapping[y][x] = (pred_mapping[y][x] + mapping_pred[x, y])/2
+                        pred_mapping[y][x] = (pred_mapping[y][x] + mapping_pred[x][y])/2
                     else:
                         pred_mapping[y][x] = mapping_pred[x, y] # Subgraph node: Graph node
 
@@ -269,6 +270,7 @@ if __name__ == '__main__':
 
     list_results = np.array(list_results)
     avg_results = np.mean(list_results, axis=1)
+    print(len(avg_results))
     print(avg_results)
 
     '''
