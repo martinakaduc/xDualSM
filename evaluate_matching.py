@@ -208,6 +208,7 @@ if __name__ == '__main__':
     # Starting evaluation
     test_true_mapping = []
     test_pred_mapping = []
+    list_results = []
 
     model.eval()
     st_eval = time.time()
@@ -222,8 +223,41 @@ if __name__ == '__main__':
         pred =  model.get_refined_adjs2((H, A1, A2, V))
         
         # Collect true label and predicted label
-        test_true_mapping += M.data.cpu().numpy()
-        test_pred_mapping += pred.data.cpu().numpy()
+        test_true_mapping = M.data.cpu().numpy()
+        test_pred_mapping = pred.data.cpu().numpy()
+
+        for mapping_true, mapping_pred in tqdm(zip(test_true_mapping, test_pred_mapping)):
+            gt_mapping = {}
+            x_coord, y_coord = np.where(mapping_true > 0)
+            for x, y in zip(x_coord, y_coord):
+                if x < y:
+                    gt_mapping[x] = [y] # Subgraph node: Graph node
+            
+            pred_mapping = defaultdict(lambda: {})
+            x_coord, y_coord = np.where(mapping_pred > 0)
+
+            # TODO pred_mapping shoud be sorted by probability
+
+            for x, y in zip(x_coord, y_coord):
+                if x < y:
+                    if y in pred_mapping[x]:
+                        pred_mapping[x][y] = (pred_mapping[x][y] + mapping_pred[x, y])/2
+                    else:
+                        pred_mapping[x][y] = mapping_pred[x, y] # Subgraph node: Graph node
+                else:
+                    if x in pred_mapping[y]:
+                        pred_mapping[y][x] = (pred_mapping[y][x] + mapping_pred[x, y])/2
+                    else:
+                        pred_mapping[y][x] = mapping_pred[x, y] # Subgraph node: Graph node
+
+            sorted_predict_mapping = defaultdict(lambda: [])
+            sorted_predict_mapping.update({k: [y[0] for y in 
+                                        sorted([(n, prob) for n, prob in v.items()], key=lambda x: x[1])]
+                                        for k, v in pred_mapping.items()
+                                    })
+
+            results = eval_mapping(gt_mapping, sorted_predict_mapping, pred_mapping)
+            list_results.append(results)
 
         if time.time() - st_eval > 10000:
             break
@@ -232,40 +266,6 @@ if __name__ == '__main__':
 
     # test_true_mapping = np.concatenate(np.array(test_true_mapping), 0)
     # test_pred_mapping = np.concatenate(np.array(test_pred_mapping), 0)
-    list_results = []
-
-    for mapping_true, mapping_pred in tqdm(zip(test_true_mapping, test_pred_mapping)):
-        gt_mapping = {}
-        x_coord, y_coord = np.where(mapping_true > 0)
-        for x, y in zip(x_coord, y_coord):
-            if x < y:
-                gt_mapping[x] = [y] # Subgraph node: Graph node
-        
-        pred_mapping = defaultdict(lambda: {})
-        x_coord, y_coord = np.where(mapping_pred > 0)
-
-        # TODO pred_mapping shoud be sorted by probability
-
-        for x, y in zip(x_coord, y_coord):
-            if x < y:
-                if y in pred_mapping[x]:
-                    pred_mapping[x][y] = (pred_mapping[x][y] + mapping_pred[x, y])/2
-                else:
-                    pred_mapping[x][y] = mapping_pred[x, y] # Subgraph node: Graph node
-            else:
-                if x in pred_mapping[y]:
-                    pred_mapping[y][x] = (pred_mapping[y][x] + mapping_pred[x, y])/2
-                else:
-                    pred_mapping[y][x] = mapping_pred[x, y] # Subgraph node: Graph node
-
-        sorted_predict_mapping = defaultdict(lambda: [])
-        sorted_predict_mapping.update({k: [y[0] for y in 
-                                    sorted([(n, prob) for n, prob in v.items()], key=lambda x: x[1])]
-                                    for k, v in pred_mapping.items()
-                                 })
-
-        results = eval_mapping(gt_mapping, sorted_predict_mapping, pred_mapping)
-        list_results.append(results)
 
     list_results = np.array(list_results)
     avg_results = np.mean(list_results, axis=1)
