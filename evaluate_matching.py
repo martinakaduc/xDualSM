@@ -252,7 +252,7 @@ if __name__ == '__main__':
 
             sorted_predict_mapping = defaultdict(lambda: [])
             sorted_predict_mapping.update({k: [y[0] for y in 
-                                        sorted([(n, prob) for n, prob in v.items()], key=lambda x: x[1])]
+                                        sorted([(n, prob) for n, prob in v.items()], key=lambda x: x[1], reverse=True)]
                                         for k, v in pred_mapping.items()
                                     })
 
@@ -269,7 +269,6 @@ if __name__ == '__main__':
 
     list_results = np.array(list_results)
     avg_results = np.mean(list_results, axis=0)
-    print(len(avg_results))
     print(avg_results)
 
     '''
