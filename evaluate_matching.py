@@ -141,7 +141,6 @@ def eval_mapping(groundtruth, predict_list, predict_prob):
             else:
                 list_acc.append(0)
 
-        print(list_acc)
         acc.append(list_acc)
 
         if groundtruth[sgn] in predict_list[sgn]:
@@ -269,7 +268,7 @@ if __name__ == '__main__':
     # test_pred_mapping = np.concatenate(np.array(test_pred_mapping), 0)
 
     list_results = np.array(list_results)
-    avg_results = np.mean(list_results, axis=1)
+    avg_results = np.mean(list_results, axis=0)
     print(len(avg_results))
     print(avg_results)
 
