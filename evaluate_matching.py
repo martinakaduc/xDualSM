@@ -259,17 +259,19 @@ if __name__ == '__main__':
             results = eval_mapping(gt_mapping, sorted_predict_mapping, pred_mapping)
             list_results.append(results)
 
-        if time.time() - st_eval > 10:
-            break
-            
     end = time.time()
-
-    # test_true_mapping = np.concatenate(np.array(test_true_mapping), 0)
-    # test_pred_mapping = np.concatenate(np.array(test_pred_mapping), 0)
 
     list_results = np.array(list_results)
     avg_results = np.mean(list_results, axis=0)
+    print("Test time: ", end-st_eval)
+    print("Top1-Top10 Accuracy, MRR")
     print(avg_results)
+
+    with open(os.path.join(result_dir, "%s_result_matching.csv"%args.dataset), "w", encoding="utf-8") as f:
+        f.write("Time,Top1-Acc,Top2-Acc,Top3-Acc,Top4-Acc,Top5-Acc,Top6-Acc,Top7-Acc,Top8-Acc,Top9-Acc,Top10-Acc,MRR\n")
+        f.write("%f,"%(end-st_eval))
+        f.write(",".join([str(x) for x in avg_results]))
+        f.write('\n')
 
     '''
     # Load subgraph
