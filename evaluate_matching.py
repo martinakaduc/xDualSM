@@ -222,13 +222,16 @@ if __name__ == '__main__':
         pred =  model.get_refined_adjs2((H, A1, A2, V))
         
         # Collect true label and predicted label
-        test_true_mapping.append(M.data.cpu().numpy())
-        test_pred_mapping.append(pred.data.cpu().numpy())
+        test_true_mapping += M.data.cpu().numpy()
+        test_pred_mapping += pred.data.cpu().numpy()
+
+        if time.time() - st_eval > 10000:
+            break
             
     end = time.time()
 
-    test_true_mapping = np.concatenate(np.array(test_true_mapping), 0)
-    test_pred_mapping = np.concatenate(np.array(test_pred_mapping), 0)
+    # test_true_mapping = np.concatenate(np.array(test_true_mapping), 0)
+    # test_pred_mapping = np.concatenate(np.array(test_pred_mapping), 0)
     list_results = []
 
     for mapping_true, mapping_pred in tqdm(zip(test_true_mapping, test_pred_mapping)):
