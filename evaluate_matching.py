@@ -192,7 +192,7 @@ if __name__ == '__main__':
     with open (args.test_keys, 'rb') as fp:
         test_keys = pickle.load(fp)
         # Only use isomorphism subgraphs for mapping testing 
-        test_keys = list(filter(lambda x: x.endswith("iso"), test_keys))
+        test_keys = list(filter(lambda x: x.endswith("iso_test"), test_keys))
 
     print (f'Number of test data: {len(test_keys)}')
 
