@@ -148,7 +148,7 @@ def eval_mapping(groundtruth, predict_list, predict_prob):
         else:
             MRR.append(0)
 
-    acc = np.mean(np.array(acc), axis=1)
+    acc = np.mean(np.array(acc), axis=0)
     MRR = np.mean(np.array(MRR))
     return acc + np.array([MRR])
 
