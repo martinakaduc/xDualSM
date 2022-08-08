@@ -226,7 +226,7 @@ if __name__ == '__main__':
         test_true_mapping = M.data.cpu().numpy()
         test_pred_mapping = pred.data.cpu().numpy()
 
-        for mapping_true, mapping_pred in tqdm(zip(test_true_mapping, test_pred_mapping)):
+        for mapping_true, mapping_pred in zip(test_true_mapping, test_pred_mapping):
             gt_mapping = {}
             x_coord, y_coord = np.where(mapping_true > 0)
             for x, y in zip(x_coord, y_coord):
