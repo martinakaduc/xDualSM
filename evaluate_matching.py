@@ -156,6 +156,7 @@ def eval_mapping(groundtruth, predict_list, predict_prob):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("--ckpt", "-c", help="checkpoint for gnn", type=str, default="model/best_large_30_20.pt")
+    parser.add_argument("--dataset", help="dataset", type=str, default = "tiny")
     parser.add_argument("--confidence", help="isomorphism threshold", type=float, default = 0.5)
     parser.add_argument("--mapping_threshold", help="mapping threshold", type=float, default = 1e-5)
     parser.add_argument("--ngpu", help="number of gpu", type=int, default = 1)
@@ -169,6 +170,10 @@ if __name__ == '__main__':
     parser.add_argument("--al_scale", help="attn_loss scale", type=float, default = 1.0)
     parser.add_argument("--tatic", help="tactic of defining number of hops", type=str, default = "static", choices=["static", "continuos", "jump"])
     parser.add_argument("--nhop", help="number of hops", type=int, default = 1)
+    parser.add_argument("--data_path", help="path to the data", type=str, default='data_processed')
+    parser.add_argument("--result_dir", help="save directory of model parameter", type=str, default = 'results/')
+    parser.add_argument("--train_keys", help="train keys", type=str, default='train_keys.pkl')
+    parser.add_argument("--test_keys", help="test keys", type=str, default='test_keys.pkl')
 
     args = parser.parse_args()
     print(args)
