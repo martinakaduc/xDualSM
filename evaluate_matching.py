@@ -266,7 +266,7 @@ if __name__ == '__main__':
 
     # test_true_mapping = np.concatenate(np.array(test_true_mapping), 0)
     # test_pred_mapping = np.concatenate(np.array(test_pred_mapping), 0)
-
+    print(list_results)
     list_results = np.array(list_results)
     avg_results = np.mean(list_results, axis=1)
     print(avg_results)
