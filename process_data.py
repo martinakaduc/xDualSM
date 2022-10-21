@@ -114,6 +114,8 @@ def load_dataset(data_dir, list_source, save_dir, additional_tag=""):
         pickle.dump(size_dict, open(f"{save_dir}/subgraphs_size.pkl", "wb"))
         pickle.dump(degree_dict, open(f"{save_dir}/subgraphs_degree.pkl", "wb"))
 
+    return list(size_dict.keys())
+
 # Load data
 if not os.path.exists(data_proccessed_dir):
         os.mkdir(data_proccessed_dir)
@@ -125,12 +127,12 @@ if sys.argv[2] == "synthesis":
     list_source = os.listdir(data_dir)
     list_source = list(filter(lambda x: os.path.isdir(os.path.join(data_dir, x)), list_source))
 
-    load_dataset(data_dir, list_source, data_proccessed_dir)
+    valid_keys = load_dataset(data_dir, list_source, data_proccessed_dir)
 
     # Split train test
     from sklearn.model_selection import train_test_split
     train_source, test_source = train_test_split(list_source, test_size=0.2, random_state=42)
-    valid_keys = os.listdir(data_proccessed_dir)
+    # valid_keys = os.listdir(data_proccessed_dir)
 
     train_keys = [k for k in valid_keys if k.split('_')[0] in train_source]    
     test_keys = [k for k in valid_keys if k.split('_')[0] in test_source]  
@@ -140,15 +142,15 @@ elif sys.argv[2] == "real":
     list_source = os.listdir(data_dir)
     list_source = list(filter(lambda x: os.path.isdir(os.path.join(data_dir, x)), list_source))
 
-    load_dataset(data_dir, list_source, data_proccessed_dir, additional_tag="test")
-    test_keys = os.listdir(data_proccessed_dir)
+    test_keys = load_dataset(data_dir, list_source, data_proccessed_dir, additional_tag="test")
+    # test_keys = os.listdir(data_proccessed_dir)
     
     data_dir_train = "data_%s/datasets/%s" % (sys.argv[2], data_name + "_train")
     list_source_train = os.listdir(data_dir_train)
     list_source_train = list(filter(lambda x: os.path.isdir(os.path.join(data_dir_train, x)), list_source_train))
 
-    load_dataset(data_dir_train, list_source_train, data_proccessed_dir, additional_tag="train")
-    train_keys = list(set(os.listdir(data_proccessed_dir)) - set(test_keys))
+    train_keys = load_dataset(data_dir_train, list_source_train, data_proccessed_dir, additional_tag="train")
+    # train_keys = list(set(os.listdir(data_proccessed_dir)) - set(test_keys))
 
 # Notice that key which has "iso" is isomorphism, otherwise non-isomorphism
 
