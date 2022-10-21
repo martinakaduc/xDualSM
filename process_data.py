@@ -106,7 +106,7 @@ def load_dataset(data_dir, list_source, save_dir, additional_tag=""):
         for key, data in noniso_subgraphs.items():
             fname = "%s_%d_non_%s" % (source_id, key, additional_tag)
             size_dict[fname] = noniso_sizes[key]
-            degree_dict[fname] = iso_degrees[key]
+            degree_dict[fname] = noniso_degrees[key]
             with open(f"{save_dir}/{fname}", 'wb') as f:
                 pickle.dump([data, graph, noniso_subgraphs_mapping[key]], f)
 
