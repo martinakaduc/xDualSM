@@ -110,8 +110,9 @@ def load_dataset(data_dir, list_source, save_dir, additional_tag=""):
             with open(f"{save_dir}/{fname}", 'wb') as f:
                 pickle.dump([data, graph, noniso_subgraphs_mapping[key]], f)
 
-    pickle.dump(size_dict, open(f"{save_dir}/subgraphs_size.pkl", "wb"))
-    pickle.dump(degree_dict, open(f"{save_dir}/subgraphs_degree.pkl", "wb"))
+    if additional_tag != "" and additional_tag == "test":
+        pickle.dump(size_dict, open(f"{save_dir}/subgraphs_size.pkl", "wb"))
+        pickle.dump(degree_dict, open(f"{save_dir}/subgraphs_degree.pkl", "wb"))
 
 # Load data
 if not os.path.exists(data_proccessed_dir):
