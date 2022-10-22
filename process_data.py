@@ -193,11 +193,11 @@ with open("%s/test_keys_%s.pkl"%(data_proccessed_dir, "nondense_60_"), 'wb') as 
 with open("%s/test_keys_%s.pkl"%(data_proccessed_dir, "dense_0_20"), 'wb') as f:
     pickle.dump(dense_0_20, f)
 
-with open("%s/test_keys_%s.pkl"%(data_proccessed_dir, "nondense_20_40"), 'wb') as f:
+with open("%s/test_keys_%s.pkl"%(data_proccessed_dir, "dense_20_40"), 'wb') as f:
     pickle.dump(dense_20_40, f)
 
 with open("%s/test_keys_%s.pkl"%(data_proccessed_dir, "dense_40_60"), 'wb') as f:
     pickle.dump(dense_40_60, f)
 
-with open("%s/test_keys_%s.pkl"%(data_proccessed_dir, "dense_0_20"), 'wb') as f:
+with open("%s/test_keys_%s.pkl"%(data_proccessed_dir, "dense_60_"), 'wb') as f:
     pickle.dump(dense_60_, f)
