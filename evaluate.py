@@ -39,6 +39,7 @@ def main(args):
     ngpu = args.ngpu
     batch_size = args.batch_size
     data_path = os.path.join(args.data_path, args.dataset)
+    result_file =  "%s_result"%args.dataset + args.test_keys[9:-4] + ".csv"
     args.train_keys = os.path.join(data_path, args.train_keys)
     args.test_keys = os.path.join(data_path, args.test_keys)
     result_dir = os.path.join(args.result_dir, "%s_%s_%d" % (args.dataset, args.tatic, args.nhop))
@@ -106,7 +107,6 @@ def main(args):
 
         result_rows.append([conf_step, test_time, test_roc, test_prc, test_pre, test_rec, test_f1s, test_acc])
     
-    result_file =  "%s_result"%args.dataset + args.test_keys[9:-4] + ".csv"
     with open(os.path.join(result_dir, result_file), "w", encoding="utf-8") as f:
         f.write("Confident,Execution Time,ROC AUC,PR AUC,Precision,Recall,F1-Score,Accuracy\n")
         for row in result_rows:
