@@ -106,7 +106,7 @@ def main(args):
 
         result_rows.append([conf_step, test_time, test_roc, test_prc, test_pre, test_rec, test_f1s, test_acc])
     
-    result_file =  "%s_result"%args.dataset + args.test_keys[10:-4] + ".csv"
+    result_file =  "%s_result"%args.dataset + args.test_keys[9:-4] + ".csv"
     with open(os.path.join(result_dir, result_file), "w", encoding="utf-8") as f:
         f.write("Confident,Execution Time,ROC AUC,PR AUC,Precision,Recall,F1-Score,Accuracy\n")
         for row in result_rows:
