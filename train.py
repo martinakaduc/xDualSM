@@ -171,6 +171,7 @@ def main(args):
 
         log_file.write("%d,%.3f,%.3f,%.3f,%.3f,%.3f,%.3f\n" \
         %(epoch, train_losses, test_losses, train_roc, test_roc, st_eval-st, end-st_eval))
+        log_file.flush()
 
         name = save_dir + '/save_'+str(epoch)+'.pt'
         torch.save(model.state_dict(), name)
