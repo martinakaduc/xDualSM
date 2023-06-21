@@ -14,6 +14,7 @@ from scipy.spatial import distance_matrix
 from collections import defaultdict
 from dataset import BaseDataset, collate_fn, UnderSampler
 
+
 def onehot_encoding_node(m, embedding_dim, is_subgraph=True):
     n = m.number_of_nodes()
     H = []
@@ -26,17 +27,20 @@ def onehot_encoding_node(m, embedding_dim, is_subgraph=True):
     # else:
     #     H = np.concatenate([np.zeros((n,embedding_dim)), H], 1)
 
-    return H    
+    return H
 
-class InferenceGNN():
+
+class InferenceGNN:
     def __init__(self, args) -> None:
         if args.ngpu > 0:
             cmd = utils.set_cuda_visible_device(args.ngpu)
-            os.environ['CUDA_VISIBLE_DEVICES'] = cmd[:-1]
+            os.environ["CUDA_VISIBLE_DEVICES"] = cmd[:-1]
 
         self.model = gnn(args)
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.model = utils.initialize_model(self.model, self.device, load_save_file=args.ckpt, gpu=(args.ngpu > 0))
+        self.model = utils.initialize_model(
+            self.model, self.device, load_save_file=args.ckpt, gpu=(args.ngpu > 0)
+        )
 
         self.model.eval()
         self.embedding_dim = args.embedding_dim
@@ -51,58 +55,63 @@ class InferenceGNN():
         n2 = m2.number_of_nodes()
         adj2 = nx.to_numpy_matrix(m2) + np.eye(n2)
         H2 = onehot_encoding_node(m2, self.embedding_dim, is_subgraph=False)
-        
+
         # Aggregation node encoding
-        agg_adj1 = np.zeros((n1+n2, n1+n2))
+        agg_adj1 = np.zeros((n1 + n2, n1 + n2))
         agg_adj1[:n1, :n1] = adj1
         agg_adj1[n1:, n1:] = adj2
         agg_adj2 = np.copy(agg_adj1)
         dm = distance_matrix(H1, H2)
         dm_new = np.zeros_like(dm)
         dm_new[dm == 0.0] = 1.0
-        agg_adj2[:n1,n1:] = np.copy(dm_new)
-        agg_adj2[n1:,:n1] = np.copy(np.transpose(dm_new))
-        
-        H1 = np.concatenate([H1, np.zeros((n1,self.embedding_dim))], 1)
-        H2 = np.concatenate([np.zeros((n2,self.embedding_dim)), H2], 1)
+        agg_adj2[:n1, n1:] = np.copy(dm_new)
+        agg_adj2[n1:, :n1] = np.copy(np.transpose(dm_new))
+
+        H1 = np.concatenate([H1, np.zeros((n1, self.embedding_dim))], 1)
+        H2 = np.concatenate([np.zeros((n2, self.embedding_dim)), H2], 1)
         H = np.concatenate([H1, H2], 0)
 
         # node indice for aggregation
-        valid = np.zeros((n1+n2,))
+        valid = np.zeros((n1 + n2,))
         valid[:n1] = 1
 
         sample = {
-                  'H':H, \
-                  'A1': agg_adj1, \
-                  'A2': agg_adj2, \
-                  'V': valid, \
-                  }
+            "H": H,
+            "A1": agg_adj1,
+            "A2": agg_adj2,
+            "V": valid,
+        }
 
         return sample
 
     def input_to_tensor(self, batch_input):
-        max_natoms = max([len(item['H']) for item in batch_input if item is not None])
+        max_natoms = max([len(item["H"]) for item in batch_input if item is not None])
         batch_size = len(batch_input)
-    
-        H = np.zeros((batch_size, max_natoms, batch_input[0]['H'].shape[-1]))
+
+        H = np.zeros((batch_size, max_natoms, batch_input[0]["H"].shape[-1]))
         A1 = np.zeros((batch_size, max_natoms, max_natoms))
         A2 = np.zeros((batch_size, max_natoms, max_natoms))
         V = np.zeros((batch_size, max_natoms))
-        
+
         for i in range(batch_size):
-            natom = len(batch_input[i]['H'])
-            
-            H[i,:natom] = batch_input[i]['H']
-            A1[i,:natom,:natom] = batch_input[i]['A1']
-            A2[i,:natom,:natom] = batch_input[i]['A2']
-            V[i,:natom] = batch_input[i]['V']
+            natom = len(batch_input[i]["H"])
+
+            H[i, :natom] = batch_input[i]["H"]
+            A1[i, :natom, :natom] = batch_input[i]["A1"]
+            A2[i, :natom, :natom] = batch_input[i]["A2"]
+            V[i, :natom] = batch_input[i]["V"]
 
         H = torch.from_numpy(H).float()
         A1 = torch.from_numpy(A1).float()
         A2 = torch.from_numpy(A2).float()
         V = torch.from_numpy(V).float()
 
-        H, A1, A2, V = H.to(self.device), A1.to(self.device), A2.to(self.device),V.to(self.device)
+        H, A1, A2, V = (
+            H.to(self.device),
+            A1.to(self.device),
+            A2.to(self.device),
+            V.to(self.device),
+        )
 
         return H, A1, A2, V
 
@@ -128,6 +137,7 @@ class InferenceGNN():
         # results = results.cpu().detach().numpy()
         # return [distance_matrix(results[0], results[0])]
 
+
 def eval_mapping(groundtruth, predict_list, predict_prob):
     acc = []
     MRR = []
@@ -135,7 +145,7 @@ def eval_mapping(groundtruth, predict_list, predict_prob):
     for sgn in groundtruth:
         # Calculate precision
         list_acc = []
-        for i in range(1,11):
+        for i in range(1, 11):
             if groundtruth[sgn] in predict_list[sgn][:i]:
                 list_acc.append(1)
             else:
@@ -153,28 +163,68 @@ def eval_mapping(groundtruth, predict_list, predict_prob):
     return np.concatenate([acc, np.array([MRR])])
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--ckpt", "-c", help="checkpoint for gnn", type=str, default="model/best_large_30_20.pt")
-    parser.add_argument("--dataset", help="dataset", type=str, default = "tiny")
-    parser.add_argument("--num_workers", help="number of workers", type=int, default = os.cpu_count())
-    parser.add_argument("--confidence", help="isomorphism threshold", type=float, default = 0.5)
-    parser.add_argument("--mapping_threshold", help="mapping threshold", type=float, default = 1e-5)
-    parser.add_argument("--ngpu", help="number of gpu", type=int, default = 1)
-    parser.add_argument("--batch_size", help="batch_size", type=int, default = 32)
-    parser.add_argument("--embedding_dim", help="node embedding dim aka number of distinct node label", type=int, default = 20)
-    parser.add_argument("--n_graph_layer", help="number of GNN layer", type=int, default = 4)
-    parser.add_argument("--d_graph_layer", help="dimension of GNN layer", type=int, default = 140)
-    parser.add_argument("--n_FC_layer", help="number of FC layer", type=int, default = 4)
-    parser.add_argument("--d_FC_layer", help="dimension of FC layer", type=int, default = 128)
-    parser.add_argument("--dropout_rate", help="dropout_rate", type=float, default = 0.0)
-    parser.add_argument("--al_scale", help="attn_loss scale", type=float, default = 1.0)
-    parser.add_argument("--tatic", help="tactic of defining number of hops", type=str, default = "static", choices=["static", "continuos", "jump"])
-    parser.add_argument("--nhop", help="number of hops", type=int, default = 1)
-    parser.add_argument("--data_path", help="path to the data", type=str, default='data_processed')
-    parser.add_argument("--result_dir", help="save directory of model parameter", type=str, default = 'results/')
-    parser.add_argument("--train_keys", help="train keys", type=str, default='train_keys.pkl')
-    parser.add_argument("--test_keys", help="test keys", type=str, default='test_keys.pkl')
+    parser.add_argument(
+        "--ckpt",
+        "-c",
+        help="checkpoint for gnn",
+        type=str,
+        default="model/best_large_30_20.pt",
+    )
+    parser.add_argument("--dataset", help="dataset", type=str, default="tiny")
+    parser.add_argument(
+        "--num_workers", help="number of workers", type=int, default=os.cpu_count()
+    )
+    parser.add_argument(
+        "--confidence", help="isomorphism threshold", type=float, default=0.5
+    )
+    parser.add_argument(
+        "--mapping_threshold", help="mapping threshold", type=float, default=1e-5
+    )
+    parser.add_argument("--ngpu", help="number of gpu", type=int, default=1)
+    parser.add_argument("--batch_size", help="batch_size", type=int, default=32)
+    parser.add_argument(
+        "--embedding_dim",
+        help="node embedding dim aka number of distinct node label",
+        type=int,
+        default=20,
+    )
+    parser.add_argument(
+        "--n_graph_layer", help="number of GNN layer", type=int, default=4
+    )
+    parser.add_argument(
+        "--d_graph_layer", help="dimension of GNN layer", type=int, default=140
+    )
+    parser.add_argument("--n_FC_layer", help="number of FC layer", type=int, default=4)
+    parser.add_argument(
+        "--d_FC_layer", help="dimension of FC layer", type=int, default=128
+    )
+    parser.add_argument("--dropout_rate", help="dropout_rate", type=float, default=0.0)
+    parser.add_argument("--al_scale", help="attn_loss scale", type=float, default=1.0)
+    parser.add_argument(
+        "--tatic",
+        help="tactic of defining number of hops",
+        type=str,
+        default="static",
+        choices=["static", "continuos", "jump"],
+    )
+    parser.add_argument("--nhop", help="number of hops", type=int, default=1)
+    parser.add_argument(
+        "--data_path", help="path to the data", type=str, default="data_processed"
+    )
+    parser.add_argument(
+        "--result_dir",
+        help="save directory of model parameter",
+        type=str,
+        default="results/",
+    )
+    parser.add_argument(
+        "--train_keys", help="train keys", type=str, default="train_keys.pkl"
+    )
+    parser.add_argument(
+        "--test_keys", help="test keys", type=str, default="test_keys.pkl"
+    )
 
     args = parser.parse_args()
     print(args)
@@ -184,26 +234,36 @@ if __name__ == '__main__':
     data_path = os.path.join(args.data_path, args.dataset)
     args.train_keys = os.path.join(data_path, args.train_keys)
     args.test_keys = os.path.join(data_path, args.test_keys)
-    result_dir = os.path.join(args.result_dir, "%s_%s_%d" % (args.dataset, args.tatic, args.nhop))
+    result_dir = os.path.join(
+        args.result_dir, "%s_%s_%d" % (args.dataset, args.tatic, args.nhop)
+    )
 
     if not os.path.isdir(result_dir):
-        os.system('mkdir ' + result_dir)
+        os.system("mkdir " + result_dir)
 
-    with open (args.test_keys, 'rb') as fp:
+    with open(args.test_keys, "rb") as fp:
         test_keys = pickle.load(fp)
-        # Only use isomorphism subgraphs for mapping testing 
+        # Only use isomorphism subgraphs for mapping testing
         test_keys = list(filter(lambda x: x.endswith("iso_test"), test_keys))
 
-    print (f'Number of test data: {len(test_keys)}')
+    print(f"Number of test data: {len(test_keys)}")
 
     model = gnn(args)
-    print ('Number of parameters: ', sum(p.numel() for p in model.parameters() if p.requires_grad))
+    print(
+        "Number of parameters: ",
+        sum(p.numel() for p in model.parameters() if p.requires_grad),
+    )
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = utils.initialize_model(model, device, load_save_file=args.ckpt)
 
     test_dataset = BaseDataset(test_keys, data_path, embedding_dim=args.embedding_dim)
-    test_dataloader = DataLoader(test_dataset, args.batch_size, \
-        shuffle=False, num_workers = args.num_workers, collate_fn=collate_fn)
+    test_dataloader = DataLoader(
+        test_dataset,
+        args.batch_size,
+        shuffle=False,
+        num_workers=args.num_workers,
+        collate_fn=collate_fn,
+    )
 
     # Starting evaluation
     test_true_mapping = []
@@ -215,13 +275,20 @@ if __name__ == '__main__':
 
     for sample in tqdm(test_dataloader):
         model.zero_grad()
-        H, A1, A2, M, S, Y, V, _ = sample 
-        H, A1, A2, M, S, Y, V = H.to(device), A1.to(device), A2.to(device),\
-                            M.to(device), S.to(device), Y.to(device), V.to(device)
-        
+        H, A1, A2, M, S, Y, V, _ = sample
+        H, A1, A2, M, S, Y, V = (
+            H.to(device),
+            A1.to(device),
+            A2.to(device),
+            M.to(device),
+            S.to(device),
+            Y.to(device),
+            V.to(device),
+        )
+
         # Test neural network
-        pred =  model.get_refined_adjs2((H, A1, A2, V))
-        
+        pred = model.get_refined_adjs2((H, A1, A2, V))
+
         # Collect true label and predicted label
         test_true_mapping = M.data.cpu().numpy()
         test_pred_mapping = pred.data.cpu().numpy()
@@ -231,8 +298,8 @@ if __name__ == '__main__':
             x_coord, y_coord = np.where(mapping_true > 0)
             for x, y in zip(x_coord, y_coord):
                 if x < y:
-                    gt_mapping[x] = [y] # Subgraph node: Graph node
-            
+                    gt_mapping[x] = [y]  # Subgraph node: Graph node
+
             pred_mapping = defaultdict(lambda: {})
             x_coord, y_coord = np.where(mapping_pred > 0)
 
@@ -241,20 +308,37 @@ if __name__ == '__main__':
             for x, y in zip(x_coord, y_coord):
                 if x < y:
                     if y in pred_mapping[x]:
-                        pred_mapping[x][y] = (pred_mapping[x][y] + mapping_pred[x][y])/2
+                        pred_mapping[x][y] = (
+                            pred_mapping[x][y] + mapping_pred[x][y]
+                        ) / 2
                     else:
-                        pred_mapping[x][y] = mapping_pred[x, y] # Subgraph node: Graph node
+                        pred_mapping[x][y] = mapping_pred[
+                            x, y
+                        ]  # Subgraph node: Graph node
                 else:
                     if x in pred_mapping[y]:
-                        pred_mapping[y][x] = (pred_mapping[y][x] + mapping_pred[x][y])/2
+                        pred_mapping[y][x] = (
+                            pred_mapping[y][x] + mapping_pred[x][y]
+                        ) / 2
                     else:
-                        pred_mapping[y][x] = mapping_pred[x, y] # Subgraph node: Graph node
+                        pred_mapping[y][x] = mapping_pred[
+                            x, y
+                        ]  # Subgraph node: Graph node
 
             sorted_predict_mapping = defaultdict(lambda: [])
-            sorted_predict_mapping.update({k: [y[0] for y in 
-                                        sorted([(n, prob) for n, prob in v.items()], key=lambda x: x[1], reverse=True)]
-                                        for k, v in pred_mapping.items()
-                                    })
+            sorted_predict_mapping.update(
+                {
+                    k: [
+                        y[0]
+                        for y in sorted(
+                            [(n, prob) for n, prob in v.items()],
+                            key=lambda x: x[1],
+                            reverse=True,
+                        )
+                    ]
+                    for k, v in pred_mapping.items()
+                }
+            )
 
             results = eval_mapping(gt_mapping, sorted_predict_mapping, pred_mapping)
             list_results.append(results)
@@ -263,17 +347,23 @@ if __name__ == '__main__':
 
     list_results = np.array(list_results)
     avg_results = np.mean(list_results, axis=0)
-    print("Test time: ", end-st_eval)
+    print("Test time: ", end - st_eval)
     print("Top1-Top10 Accuracy, MRR")
     print(avg_results)
 
-    with open(os.path.join(result_dir, "%s_result_matching.csv"%args.dataset), "w", encoding="utf-8") as f:
-        f.write("Time,Top1-Acc,Top2-Acc,Top3-Acc,Top4-Acc,Top5-Acc,Top6-Acc,Top7-Acc,Top8-Acc,Top9-Acc,Top10-Acc,MRR\n")
-        f.write("%f,"%(end-st_eval))
+    with open(
+        os.path.join(result_dir, "%s_result_matching.csv" % args.dataset),
+        "w",
+        encoding="utf-8",
+    ) as f:
+        f.write(
+            "Time,Top1-Acc,Top2-Acc,Top3-Acc,Top4-Acc,Top5-Acc,Top6-Acc,Top7-Acc,Top8-Acc,Top9-Acc,Top10-Acc,MRR\n"
+        )
+        f.write("%f," % (end - st_eval))
         f.write(",".join([str(x) for x in avg_results]))
-        f.write('\n')
+        f.write("\n")
 
-    '''
+    """
     # Load subgraph
     subgraphs = utils.read_graphs("data_synthesis/datasets/tiny_30_20/7/iso_subgraphs.lg")
     subgraph = subgraphs[3]
@@ -389,4 +479,4 @@ if __name__ == '__main__':
             for key, value in interaction_dict.items():
                 f.write("{:d},{:d},{:.3e}\n".format(key[0], key[1], value))
 
-    '''
+    """
