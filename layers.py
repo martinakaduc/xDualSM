@@ -1,8 +1,6 @@
-import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from utils import *
 
 
 class GAT_gate(torch.nn.Module):

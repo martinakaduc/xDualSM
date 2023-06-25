@@ -1,10 +1,8 @@
-import time
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from utils import *
+
 from layers import GAT_gate
-from multiprocessing import Pool
 
 
 class gnn(torch.nn.Module):
@@ -36,8 +34,7 @@ class gnn(torch.nn.Module):
         self.gconv1 = nn.ModuleList(
             [
                 GAT_gate(
-                    self.layers1[i], self.layers1[i +
-                                                  1], cal_nhop(i), args.ngpu > 0
+                    self.layers1[i], self.layers1[i + 1], cal_nhop(i), args.ngpu > 0
                 )
                 for i in range(len(self.layers1) - 1)
             ]
@@ -54,16 +51,15 @@ class gnn(torch.nn.Module):
             ]
         )
 
-        self.embede = nn.Linear(2 * args.embedding_dim,
-                                d_graph_layer, bias=False)
+        self.embede = nn.Linear(2 * args.embedding_dim, d_graph_layer, bias=False)
         self.theta = torch.tensor(args.al_scale)
         self.zeros = torch.zeros(1)
         if args.ngpu > 0:
             self.theta = self.theta.cuda()
             self.zeros = self.zeros.cuda()
 
-    def embede_graph(self, data):
-        c_hs, c_adjs1, c_adjs2, c_valid = data
+    def embede_graph(self, X):
+        c_hs, c_adjs1, c_adjs2, c_valid = X
         c_hs = self.embede(c_hs)
         attention = None
 
@@ -86,8 +82,7 @@ class gnn(torch.nn.Module):
         for k in range(len(self.FC)):
             if k < len(self.FC) - 1:
                 c_hs = self.FC[k](c_hs)
-                c_hs = F.dropout(c_hs, p=self.dropout_rate,
-                                 training=self.training)
+                c_hs = F.dropout(c_hs, p=self.dropout_rate, training=self.training)
                 c_hs = F.relu(c_hs)
             else:
                 c_hs = self.FC[k](c_hs)
@@ -96,27 +91,19 @@ class gnn(torch.nn.Module):
 
         return c_hs
 
-    def train_model(self, data, attn_masking):
+    def forward(self, X, attn_masking=None, training=False):
         # embede a graph to a vector
-        c_hs, attention = self.embede_graph(data)
+        c_hs, attention = self.embede_graph(X)
 
         # fully connected NN
         c_hs = self.fully_connected(c_hs)
         c_hs = c_hs.view(-1)
 
         # note that if you don't use concrete dropout, regularization 1-2 is zero
-        return c_hs, self.cal_attn_loss(attention, attn_masking)
-
-    def test_model(self, data):
-        # embede a graph to a vector
-        c_hs, _ = self.embede_graph(data)
-
-        # fully connected NN
-        c_hs = self.fully_connected(c_hs)
-        c_hs = c_hs.view(-1)
-
-        # note that if you don't use concrete dropout, regularization 1-2 is zero
-        return c_hs
+        if training:
+            return c_hs, self.cal_attn_loss(attention, attn_masking)
+        else:
+            return c_hs
 
     def cal_attn_loss(self, attention, attn_masking):
         mapping, samelb = attn_masking
@@ -131,6 +118,6 @@ class gnn(torch.nn.Module):
 
         return (top / (topabot - top + 1)).sum(0) * self.theta / attention.shape[0]
 
-    def get_refined_adjs2(self, data):
-        _, attention = self.embede_graph(data)
+    def get_refined_adjs2(self, X):
+        _, attention = self.embede_graph(X)
         return attention

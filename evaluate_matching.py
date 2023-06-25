@@ -1,31 +1,26 @@
-import os
-import utils
-import torch
-import time
-import pickle
 import argparse
-import numpy as np
-import networkx as nx
-from gnn import gnn
-from tqdm import tqdm
-from datetime import datetime
-from torch.utils.data import DataLoader
-from scipy.spatial import distance_matrix
+import os
+import pickle
+import time
 from collections import defaultdict
-from dataset import BaseDataset, collate_fn, UnderSampler
+from datetime import datetime
+
+import networkx as nx
+import numpy as np
+import torch
+import utils
+from dataset import BaseDataset, collate_fn
+from gnn import gnn
+from scipy.spatial import distance_matrix
+from torch.utils.data import DataLoader
+from tqdm import tqdm
 
 
 def onehot_encoding_node(m, embedding_dim, is_subgraph=True):
-    n = m.number_of_nodes()
     H = []
     for i in m.nodes:
         H.append(utils.node_feature(m, i, embedding_dim))
     H = np.array(H)
-
-    # if is_subgraph:
-    #     H = np.concatenate([H, np.zeros((n,embedding_dim))], 1)
-    # else:
-    #     H = np.concatenate([np.zeros((n,embedding_dim)), H], 1)
 
     return H
 
@@ -369,7 +364,7 @@ if __name__ == "__main__":
     subgraph = subgraphs[3]
     print("subgraph", subgraph != None)
     utils.plotGraph(subgraph, showLabel=False)
-    
+
     # Load graph
     graphs = utils.read_graphs("data_synthesis/datasets/tiny_30_20/7/source.lg")
     graph = graphs[7]
@@ -433,14 +428,14 @@ if __name__ == "__main__":
             for nm in list_nm:
                 if mapping_gt[node] == int(nm) and node_colors[node] != "lime":
                     node_colors[node] = "lime"
-                
+
                 if mapping_gt[node] != int(nm) and node_colors[node] != "lime":
                     node_colors[node] = "pink"
 
         for gn, sgn in mapping_gt.items():
             if node_labels[gn] == "" and sgn != -1:
                 node_labels[gn] = str(sgn)
-                    
+
         edge_colors = {n: "whitesmoke" for n in graph.edges}
         for edge in graph.edges:
             n1, n2 = edge
@@ -470,8 +465,8 @@ if __name__ == "__main__":
                 if node_colors[n1] == "pink" or node_colors[n2] == "pink":
                     edge_colors[edge] = "palevioletred"
 
-        utils.plotGraph(graph, nodeLabels=node_labels, 
-                        nodeColors=list(node_colors.values()), 
+        utils.plotGraph(graph, nodeLabels=node_labels,
+                        nodeColors=list(node_colors.values()),
                         edgeColors=list(edge_colors.values()))
 
         with open("results/mapping_%s.csv" % datetime.now().strftime("%Y-%m-%dT%H-%M-%S"), "w", encoding="utf8") as f:

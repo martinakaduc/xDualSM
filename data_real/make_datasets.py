@@ -1,20 +1,21 @@
-import os
-import json
 import argparse
+import json
+import os
+from functools import reduce
+from multiprocessing import Process
+from random import choice, seed, shuffle
+
 import networkx as nx
 import numpy as np
 
 from tqdm import tqdm
-from random import choice, seed, shuffle
-from multiprocessing import Process
-from functools import reduce
 
 RAW_DATASETS_PATH = "./raw_datasets"
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Synthetic graphs")
-    parser.add_argument("--cont", default=False, type=bool, help="Continue generating")
+    parser.add_argument("--cont", action="store_true", help="Continue generating")
     parser.add_argument(
         "--num_subgraphs", default=2000, type=int, help="Number of subgraphs"
     )
@@ -44,7 +45,8 @@ def read_dataset(path, ds_name):
 
     node_labels = node_labels_file.read().strip().split("\n")
     label_set = set(node_labels)
-    label_mapping = {x: i + 1 for i, x in enumerate(label_set)}  # Label start from 1
+    # Label start from 1
+    label_mapping = {x: i + 1 for i, x in enumerate(label_set)}
     node_labels = [(i, {"label": label_mapping[x]}) for i, x in enumerate(node_labels)]
     total_graph.add_nodes_from(node_labels)
 
@@ -244,7 +246,7 @@ def add_random_edges(current_graph, NE, min_edges=61, max_edges=122):
             connected = list(dict.fromkeys(connected))
             # and find the remainder of nodes, which are candidates for new edges
 
-        unconnected = [j for j in current_graph.nodes if not j in connected]
+        unconnected = [j for j in current_graph.nodes if j not in connected]
         # print('Connected:', connected)
         # print('Unconnected', unconnected)
         is_connected = nx.is_connected(current_graph)
@@ -301,7 +303,8 @@ def add_random_nodes(
     graph_nodes = graph.number_of_nodes()
     number_of_possible_nodes_to_add = num_nodes - graph_nodes
 
-    node_id = id_node_start  # start node_id from the number of nodes already in the common graph (note that the node ids are numbered from 0)
+    # start node_id from the number of nodes already in the common graph (note that the node ids are numbered from 0)
+    node_id = id_node_start
     # so if there were 5 nodes in the common graph (0,1,2,3,4) start adding new nodes from node 5 on wards
     added_nodes = []
     for i in range(number_of_possible_nodes_to_add):
@@ -502,7 +505,7 @@ def generate_dataset(dataset_path, is_continue, number_source, *args, **kwargs):
     print("Generating...")
     list_processes = []
 
-    if is_continue != False:
+    if is_continue is not False:
         print("Continue generating...")
         generated_sample = os.listdir(dataset_path)
         generated_sample = [int(x) for x in generated_sample]

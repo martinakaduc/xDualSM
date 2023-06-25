@@ -1,25 +1,23 @@
-import pickle
-from gnn import gnn
-import time
-import numpy as np
-import utils
-import torch.nn as nn
-import torch
-import time
+import argparse
 import os
+import pickle
+import time
+
+import numpy as np
+import torch
+import utils
+from dataset import BaseDataset, collate_fn
+from gnn import gnn
 from sklearn.metrics import (
-    roc_auc_score,
     accuracy_score,
-    precision_score,
-    recall_score,
     average_precision_score,
     f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
 )
-import argparse
-import time
-from tqdm import tqdm
 from torch.utils.data import DataLoader
-from dataset import BaseDataset, collate_fn, UnderSampler
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--ngpu", help="number of gpu", type=int, default=1)
@@ -68,8 +66,6 @@ parser.add_argument("--test_keys", help="test keys", type=str, default="test_key
 
 def main(args):
     # hyper parameters
-    ngpu = args.ngpu
-    batch_size = args.batch_size
     data_path = os.path.join(args.data_path, args.dataset)
     result_file = "%s_result" % args.dataset + args.test_keys[9:-4] + ".csv"
     args.train_keys = os.path.join(data_path, args.train_keys)
@@ -116,7 +112,6 @@ def main(args):
     st_eval = time.time()
 
     for sample in tqdm(test_dataloader):
-        model.zero_grad()
         H, A1, A2, M, S, Y, V, _ = sample
         H, A1, A2, M, S, Y, V = (
             H.to(device),
@@ -129,7 +124,7 @@ def main(args):
         )
 
         # Test neural network
-        pred = model.test_model((H, A1, A2, V))
+        pred = model((H, A1, A2, V))
 
         # Collect true label and predicted label
         test_true.append(Y.data.cpu().numpy())

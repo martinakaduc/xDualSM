@@ -1,12 +1,13 @@
 import os
-import utils
-import torch
 import pickle
 import random
-import numpy as np
+
 import networkx as nx
-from torch.utils.data import Dataset
+import numpy as np
+import torch
+import utils
 from scipy.spatial import distance_matrix
+from torch.utils.data import Dataset
 from torch.utils.data.sampler import Sampler
 
 random.seed(42)

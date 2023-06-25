@@ -1,12 +1,13 @@
-import os
-import json
 import argparse
-import numpy as np
+import json
+import os
+from multiprocessing import Process
+from random import choice, seed, shuffle
+
 import networkx as nx
+import numpy as np
 
 from tqdm import tqdm
-from random import choice, seed, shuffle
-from multiprocessing import Process
 
 
 def parse_args():
@@ -14,7 +15,8 @@ def parse_args():
     parser.add_argument(
         "--config", "-c", default="configs/base.json", type=str, help="Config file"
     )
-    parser.add_argument("--cont", default=False, type=bool, help="Continue generating")
+    parser.add_argument("--cont", action="store_true",
+                        help="Continue generating")
     return parser.parse_args()
 
 
@@ -146,7 +148,7 @@ def add_random_edges(current_graph, NE, min_edges=61, max_edges=122):
             connected = list(dict.fromkeys(connected))
             # and find the remainder of nodes, which are candidates for new edges
 
-        unconnected = [j for j in current_graph.nodes if not j in connected]
+        unconnected = [j for j in current_graph.nodes if j not in connected]
         # print('Connected:', connected)
         # print('Unconnected', unconnected)
         is_connected = nx.is_connected(current_graph)
@@ -185,7 +187,8 @@ def add_random_edges(current_graph, NE, min_edges=61, max_edges=122):
             while current_graph.has_edge(old_1, old_2):
                 old_1, old_2 = np.random.choice(connected, 2, replace=False)
             edge_label = np.random.randint(1, NE + 1)
-            current_graph.add_edges_from([(old_1, old_2, {"label": edge_label})])
+            current_graph.add_edges_from(
+                [(old_1, old_2, {"label": edge_label})])
             current_graph.nodes[old_1]["modified"] = True
             current_graph.nodes[old_2]["modified"] = True
 
@@ -204,7 +207,8 @@ def add_random_nodes(
     graph_nodes = graph.number_of_nodes()
     number_of_possible_nodes_to_add = num_nodes - graph_nodes
 
-    node_id = id_node_start  # start node_id from the number of nodes already in the common graph (note that the node ids are numbered from 0)
+    # start node_id from the number of nodes already in the common graph (note that the node ids are numbered from 0)
+    node_id = id_node_start
     # so if there were 5 nodes in the common graph (0,1,2,3,4) start adding new nodes from node 5 on wards
     added_nodes = []
     for i in range(number_of_possible_nodes_to_add):
@@ -219,7 +223,8 @@ def add_random_nodes(
 
 
 def random_modify(graph, NN, NE, node_start_id, min_edges, max_edges):
-    num_steps = np.random.randint(1, graph.number_of_nodes() + graph.number_of_edges())
+    num_steps = np.random.randint(
+        1, graph.number_of_nodes() + graph.number_of_edges())
     modify_type = None
 
     while num_steps > 0:
@@ -290,8 +295,10 @@ def generate_noniso_subgraph(
     if node_ratio > 1:
         node_ratio = 1
 
-    min_edges = int(no_of_nodes * min(no_of_nodes - 1, avg_degree - std_degree) / 2)
-    max_edges = int(no_of_nodes * min(no_of_nodes - 1, avg_degree + std_degree) / 2)
+    min_edges = int(no_of_nodes * min(no_of_nodes -
+                    1, avg_degree - std_degree) / 2)
+    max_edges = int(no_of_nodes * min(no_of_nodes -
+                    1, avg_degree + std_degree) / 2)
     subgraph = None
     iteration = 0
 
@@ -427,15 +434,17 @@ def generate_one_sample(
 def generate_batch(start_idx, stop_idx, number_source, dataset_path, *args, **kwargs):
     for idx in range(start_idx, stop_idx):
         print("SAMPLE %d/%d" % (idx + 1, number_source))
-        graph, iso_subgraphs, noniso_subgraphs = generate_one_sample(*args, **kwargs)
-        save_per_source(idx, graph, iso_subgraphs, noniso_subgraphs, dataset_path)
+        graph, iso_subgraphs, noniso_subgraphs = generate_one_sample(
+            *args, **kwargs)
+        save_per_source(idx, graph, iso_subgraphs,
+                        noniso_subgraphs, dataset_path)
 
 
 def generate_dataset(dataset_path, is_continue, number_source, *args, **kwargs):
     print("Generating...")
     list_processes = []
 
-    if is_continue != False:
+    if is_continue is not False:
         print("Continue generating...")
         generated_sample = os.listdir(dataset_path)
         generated_sample = [int(x) for x in generated_sample]
@@ -450,7 +459,8 @@ def generate_dataset(dataset_path, is_continue, number_source, *args, **kwargs):
             list_idx = (
                 [(remaining_sample[0], remaining_sample[gap_idx[0]])]
                 + [
-                    (remaining_sample[gap_idx[i]], remaining_sample[gap_idx[i + 1]])
+                    (remaining_sample[gap_idx[i]],
+                     remaining_sample[gap_idx[i + 1]])
                     for i in range(gap_idx.shape[0] - 1)
                 ]
                 + [(remaining_sample[gap_idx[-1]], remaining_sample[-1] + 1)]
@@ -512,7 +522,8 @@ def save_per_source(graph_id, H, iso_subgraphs, noniso_subgraphs, dataset_path):
     # Save subgraphs
     iso_subgraph_file = os.path.join(subgraph_path, "iso_subgraphs.lg")
     noniso_subgraph_file = os.path.join(subgraph_path, "noniso_subgraphs.lg")
-    iso_subgraph_mapping_file = os.path.join(subgraph_path, "iso_subgraphs_mapping.lg")
+    iso_subgraph_mapping_file = os.path.join(
+        subgraph_path, "iso_subgraphs_mapping.lg")
     noniso_subgraph_mapping_file = os.path.join(
         subgraph_path, "noniso_subgraphs_mapping.lg"
     )
@@ -554,7 +565,8 @@ def save_per_source(graph_id, H, iso_subgraphs, noniso_subgraphs, dataset_path):
         shuffle(list_nodes)
 
         for node_idx, node_emb in enumerate(list_nodes):
-            nisf.write("v {} {}\n".format(node_idx, S.nodes[node_emb]["label"]))
+            nisf.write("v {} {}\n".format(
+                node_idx, S.nodes[node_emb]["label"]))
             if not S.nodes[node_emb]["modified"]:
                 nismf.write("v {} {}\n".format(node_idx, node_emb))
             node_mapping[node_emb] = node_idx
@@ -575,11 +587,13 @@ def save_per_source(graph_id, H, iso_subgraphs, noniso_subgraphs, dataset_path):
 def main(config_file, is_continue):
     seed(42)
     np.random.seed(42)
-    dataset_path = os.path.join("datasets", os.path.basename(config_file).split(".")[0])
+    dataset_path = os.path.join(
+        "datasets", os.path.basename(config_file).split(".")[0])
     ensure_path(dataset_path)
     config = read_config(config_file)
 
-    generate_dataset(dataset_path=dataset_path, is_continue=is_continue, **config)
+    generate_dataset(dataset_path=dataset_path,
+                     is_continue=is_continue, **config)
 
 
 if __name__ == "__main__":
