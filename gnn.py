@@ -13,6 +13,7 @@ class gnn(torch.nn.Module):
         n_FC_layer = args.n_FC_layer
         d_FC_layer = args.d_FC_layer
         self.dropout_rate = args.dropout_rate
+        self.branch = args.branch
         cal_nhop = None
 
         if args.tatic == "static":
@@ -34,7 +35,8 @@ class gnn(torch.nn.Module):
         self.gconv1 = nn.ModuleList(
             [
                 GAT_gate(
-                    self.layers1[i], self.layers1[i + 1], cal_nhop(i), args.ngpu > 0
+                    self.layers1[i], self.layers1[i +
+                                                  1], cal_nhop(i), args.ngpu > 0
                 )
                 for i in range(len(self.layers1) - 1)
             ]
@@ -51,7 +53,8 @@ class gnn(torch.nn.Module):
             ]
         )
 
-        self.embede = nn.Linear(2 * args.embedding_dim, d_graph_layer, bias=False)
+        self.embede = nn.Linear(2 * args.embedding_dim,
+                                d_graph_layer, bias=False)
         self.theta = torch.tensor(args.al_scale)
         self.zeros = torch.zeros(1)
         if args.ngpu > 0:
@@ -64,16 +67,30 @@ class gnn(torch.nn.Module):
         attention = None
 
         for k in range(len(self.gconv1)):
-            c_hs1 = self.gconv1[k](c_hs, c_adjs1)
-            if k == len(self.gconv1) - 1:
-                c_hs2, attention = self.gconv1[k](c_hs, c_adjs2, True)
+            if self.branch == "left":
+                if k == len(self.gconv1) - 1:
+                    c_hs1, attention = self.gconv1[k](c_hs, c_hs1, True)
+                else:
+                    c_hs1 = self.gconv1[k](c_hs, c_hs1)
+                c_hs1 = - c_hs1
+            elif self.branch == "right":
+                c_hs1 = 0
             else:
-                c_hs2 = self.gconv1[k](c_hs, c_adjs2)
+                c_hs1 = self.gconv1[k](c_hs, c_adjs1)
+
+            if self.branch == "left":
+                c_hs2 = 0
+            else:
+                if k == len(self.gconv1) - 1:
+                    c_hs2, attention = self.gconv1[k](c_hs, c_adjs2, True)
+                else:
+                    c_hs2 = self.gconv1[k](c_hs, c_adjs2)
+
             c_hs = c_hs2 - c_hs1
             c_hs = F.dropout(c_hs, p=self.dropout_rate, training=self.training)
+
         c_hs = c_hs * c_valid.unsqueeze(-1).repeat(1, 1, c_hs.size(-1))
         c_hs = c_hs.sum(1)
-
         return c_hs, F.normalize(attention)
 
     def fully_connected(self, c_hs):
@@ -82,7 +99,8 @@ class gnn(torch.nn.Module):
         for k in range(len(self.FC)):
             if k < len(self.FC) - 1:
                 c_hs = self.FC[k](c_hs)
-                c_hs = F.dropout(c_hs, p=self.dropout_rate, training=self.training)
+                c_hs = F.dropout(c_hs, p=self.dropout_rate,
+                                 training=self.training)
                 c_hs = F.relu(c_hs)
             else:
                 c_hs = self.FC[k](c_hs)

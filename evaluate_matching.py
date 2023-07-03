@@ -32,9 +32,11 @@ class InferenceGNN:
             os.environ["CUDA_VISIBLE_DEVICES"] = cmd[:-1]
 
         self.model = gnn(args)
-        self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(
+            "cuda:0" if torch.cuda.is_available() else "cpu")
         self.model = utils.initialize_model(
-            self.model, self.device, load_save_file=args.ckpt, gpu=(args.ngpu > 0)
+            self.model, self.device, load_save_file=args.ckpt, gpu=(
+                args.ngpu > 0)
         )
 
         self.model.eval()
@@ -80,7 +82,8 @@ class InferenceGNN:
         return sample
 
     def input_to_tensor(self, batch_input):
-        max_natoms = max([len(item["H"]) for item in batch_input if item is not None])
+        max_natoms = max([len(item["H"])
+                         for item in batch_input if item is not None])
         batch_size = len(batch_input)
 
         H = np.zeros((batch_size, max_natoms, batch_input[0]["H"].shape[-1]))
@@ -178,7 +181,8 @@ if __name__ == "__main__":
         "--mapping_threshold", help="mapping threshold", type=float, default=1e-5
     )
     parser.add_argument("--ngpu", help="number of gpu", type=int, default=1)
-    parser.add_argument("--batch_size", help="batch_size", type=int, default=32)
+    parser.add_argument("--batch_size", help="batch_size",
+                        type=int, default=32)
     parser.add_argument(
         "--embedding_dim",
         help="node embedding dim aka number of distinct node label",
@@ -191,12 +195,15 @@ if __name__ == "__main__":
     parser.add_argument(
         "--d_graph_layer", help="dimension of GNN layer", type=int, default=140
     )
-    parser.add_argument("--n_FC_layer", help="number of FC layer", type=int, default=4)
+    parser.add_argument(
+        "--n_FC_layer", help="number of FC layer", type=int, default=4)
     parser.add_argument(
         "--d_FC_layer", help="dimension of FC layer", type=int, default=128
     )
-    parser.add_argument("--dropout_rate", help="dropout_rate", type=float, default=0.0)
-    parser.add_argument("--al_scale", help="attn_loss scale", type=float, default=1.0)
+    parser.add_argument("--dropout_rate", help="dropout_rate",
+                        type=float, default=0.0)
+    parser.add_argument("--al_scale", help="attn_loss scale",
+                        type=float, default=1.0)
     parser.add_argument(
         "--tatic",
         help="tactic of defining number of hops",
@@ -205,6 +212,8 @@ if __name__ == "__main__":
         choices=["static", "continuos", "jump"],
     )
     parser.add_argument("--nhop", help="number of hops", type=int, default=1)
+    parser.add_argument("--branch", help="choosing branch",
+                        type=str, default="both", choices=["both", "left", "right"])
     parser.add_argument(
         "--data_path", help="path to the data", type=str, default="data_processed"
     )
@@ -251,7 +260,8 @@ if __name__ == "__main__":
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = utils.initialize_model(model, device, load_save_file=args.ckpt)
 
-    test_dataset = BaseDataset(test_keys, data_path, embedding_dim=args.embedding_dim)
+    test_dataset = BaseDataset(
+        test_keys, data_path, embedding_dim=args.embedding_dim)
     test_dataloader = DataLoader(
         test_dataset,
         args.batch_size,
@@ -335,7 +345,8 @@ if __name__ == "__main__":
                 }
             )
 
-            results = eval_mapping(gt_mapping, sorted_predict_mapping, pred_mapping)
+            results = eval_mapping(
+                gt_mapping, sorted_predict_mapping, pred_mapping)
             list_results.append(results)
 
     end = time.time()
