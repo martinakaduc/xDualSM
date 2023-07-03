@@ -140,9 +140,9 @@ def set_cuda_visible_device(ngpus):
         # print('nvidia-smi -i '+str(i)+' | grep "No running" | wc -l > empty_gpu_check')
         if int(output) == 1:
             empty.append(i)
-    # if len(empty) < ngpus:
-    #     print("avaliable gpus are less than required")
-    #     exit(-1)
+    if len(empty) < ngpus:
+        print("avaliable gpus are less than required")
+        exit(-1)
     cmd = ""
     for i in range(ngpus):
         cmd += str(empty[i]) + ","
