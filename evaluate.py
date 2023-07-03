@@ -141,8 +141,8 @@ def main(args):
 
     end = time.time()
 
-    test_pred = np.concatenate(np.array(test_pred), 0)
-    test_true = np.concatenate(np.array(test_true), 0)
+    test_pred = np.concatenate(test_pred, 0)
+    test_true = np.concatenate(test_true, 0)
     result_rows = []
 
     for conf_step in [
@@ -160,7 +160,6 @@ def main(args):
         0.97,
         0.98,
         0.99,
-        1,
     ]:
         test_pred_by_conf = test_pred.copy()
         test_pred_by_conf[test_pred_by_conf < conf_step] = 0
