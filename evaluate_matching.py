@@ -241,6 +241,8 @@ if __name__ == "__main__":
     result_dir = os.path.join(
         args.result_dir, "%s_%s_%d" % (args.dataset, args.tatic, args.nhop)
     )
+    if args.branch != "both":
+        result_dir += "_" + args.branch
 
     if not os.path.isdir(result_dir):
         os.system("mkdir " + result_dir)

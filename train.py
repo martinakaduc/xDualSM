@@ -80,6 +80,9 @@ def main(args):
     log_dir = os.path.join(
         args.log_dir, "%s_%s_%d" % (args.dataset, args.tatic, args.nhop)
     )
+    if args.branch != "both":
+        save_dir += "_" + args.branch
+        log_dir += "_" + args.branch
 
     # Make save dir if it doesn't exist
     if not os.path.isdir(save_dir):
