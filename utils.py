@@ -42,7 +42,8 @@ def plotGraph(
     # nx.draw_networkx_edge_labels(graph, pos, edge_labels=edgeLabels, font_color='red')
 
     plt.axis("off")
-    plt.savefig("./figures/{}.png".format(np.array2string(graph[0])), format="PNG")
+    plt.savefig(
+        "./figures/{}.png".format(np.array2string(graph[0])), format="PNG")
 
 
 def write_graphs(graphs, out_file_name):
@@ -57,7 +58,8 @@ def write_graphs(graphs, out_file_name):
             for nod1, nod2 in g.edges:
                 nid1 = node_mapping[nod1]
                 nid2 = node_mapping[nod2]
-                f.write("e %d %d %d\n" % (nid1, nid2, g.edges[(nod1, nod2)]["label"]))
+                f.write("e %d %d %d\n" %
+                        (nid1, nid2, g.edges[(nod1, nod2)]["label"]))
 
 
 def read_mapping(mapping_file, sg2g=False):
@@ -138,9 +140,9 @@ def set_cuda_visible_device(ngpus):
         # print('nvidia-smi -i '+str(i)+' | grep "No running" | wc -l > empty_gpu_check')
         if int(output) == 1:
             empty.append(i)
-    if len(empty) < ngpus:
-        print("avaliable gpus are less than required")
-        exit(-1)
+    # if len(empty) < ngpus:
+    #     print("avaliable gpus are less than required")
+    #     exit(-1)
     cmd = ""
     for i in range(ngpus):
         cmd += str(empty[i]) + ","
@@ -180,7 +182,8 @@ def onehot_encoding(x, max_x):
 
 def one_of_k_encoding(x, allowable_set):
     if x not in allowable_set:
-        raise Exception("input {0} not in allowable set{1}:".format(x, allowable_set))
+        raise Exception(
+            "input {0} not in allowable set{1}:".format(x, allowable_set))
     # print list((map(lambda s: x == s, allowable_set)))
     return list(map(lambda s: x == s, allowable_set))
 
