@@ -69,9 +69,9 @@ class gnn(torch.nn.Module):
         for k in range(len(self.gconv1)):
             if self.branch == "left":
                 if k == len(self.gconv1) - 1:
-                    c_hs1, attention = self.gconv1[k](c_hs, c_hs1, True)
+                    c_hs1, attention = self.gconv1[k](c_hs, c_adjs1, True)
                 else:
-                    c_hs1 = self.gconv1[k](c_hs, c_hs1)
+                    c_hs1 = self.gconv1[k](c_hs, c_adjs1)
                 c_hs1 = - c_hs1
             elif self.branch == "right":
                 c_hs1 = 0
