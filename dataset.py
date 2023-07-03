@@ -1,32 +1,27 @@
 import os
-import utils
-import torch
 import pickle
 import random
-import numpy as np
+
 import networkx as nx
-from torch.utils.data import Dataset
+import numpy as np
+import torch
+import utils
 from scipy.spatial import distance_matrix
+from torch.utils.data import Dataset
 from torch.utils.data.sampler import Sampler
 
 random.seed(42)
 
-def onehot_encoding_node(m, embedding_dim, is_subgraph=True):
-    n = m.number_of_nodes()
+
+def onehot_encoding_node(m, embedding_dim):
     H = []
     for i in m.nodes:
         H.append(utils.node_feature(m, i, embedding_dim))
     H = np.array(H)
+    return H
 
-    # if is_subgraph:
-    #     H = np.concatenate([H, np.zeros((n,embedding_dim))], 1)
-    # else:
-    #     H = np.concatenate([np.zeros((n,embedding_dim)), H], 1)
-
-    return H        
 
 class BaseDataset(Dataset):
-
     def __init__(self, keys, data_dir, embedding_dim=20):
         self.keys = keys
         self.data_dir = data_dir
@@ -38,7 +33,7 @@ class BaseDataset(Dataset):
     def __getitem__(self, idx):
         # idx = 0
         key = self.keys[idx]
-        with open(os.path.join(self.data_dir, key), 'rb') as f:
+        with open(os.path.join(self.data_dir, key), "rb") as f:
             data = pickle.load(f)
             if len(data) == 3:
                 m1, m2, mapping = data
@@ -49,30 +44,30 @@ class BaseDataset(Dataset):
         # Prepare subgraph
         n1 = m1.number_of_nodes()
         adj1 = nx.to_numpy_matrix(m1) + np.eye(n1)
-        H1 = onehot_encoding_node(m1, self.embedding_dim, is_subgraph=True)
+        H1 = onehot_encoding_node(m1, self.embedding_dim)
 
         # Prepare source graph
         n2 = m2.number_of_nodes()
         adj2 = nx.to_numpy_matrix(m2) + np.eye(n2)
-        H2 = onehot_encoding_node(m2, self.embedding_dim, is_subgraph=False)
-        
+        H2 = onehot_encoding_node(m2, self.embedding_dim)
+
         # Aggregation node encoding
-        agg_adj1 = np.zeros((n1+n2, n1+n2))
+        agg_adj1 = np.zeros((n1 + n2, n1 + n2))
         agg_adj1[:n1, :n1] = adj1
         agg_adj1[n1:, n1:] = adj2
         agg_adj2 = np.copy(agg_adj1)
         dm = distance_matrix(H1, H2)
         dm_new = np.zeros_like(dm)
         dm_new[dm == 0.0] = 1.0
-        agg_adj2[:n1,n1:] = np.copy(dm_new)
-        agg_adj2[n1:,:n1] = np.copy(np.transpose(dm_new))
-        
-        H1 = np.concatenate([H1, np.zeros((n1,self.embedding_dim))], 1)
-        H2 = np.concatenate([np.zeros((n2,self.embedding_dim)), H2], 1)
+        agg_adj2[:n1, n1:] = np.copy(dm_new)
+        agg_adj2[n1:, :n1] = np.copy(np.transpose(dm_new))
+
+        H1 = np.concatenate([H1, np.zeros((n1, self.embedding_dim))], 1)
+        H2 = np.concatenate([np.zeros((n2, self.embedding_dim)), H2], 1)
         H = np.concatenate([H1, H2], 0)
 
         # node indice for aggregation
-        valid = np.zeros((n1+n2,))
+        valid = np.zeros((n1 + n2,))
         valid[:n1] = 1
 
         # create mapping matrix
@@ -84,54 +79,52 @@ class BaseDataset(Dataset):
             mapping_matrix[mapping[1], mapping[0]] = 1.0
 
         same_label_matrix = np.zeros_like(agg_adj1)
-        same_label_matrix[:n1,n1:] = np.copy(dm_new)
-        same_label_matrix[n1:,:n1] = np.copy(np.transpose(dm_new))
+        same_label_matrix[:n1, n1:] = np.copy(dm_new)
+        same_label_matrix[n1:, :n1] = np.copy(np.transpose(dm_new))
 
-        # print('+++++++++++++++++++++++++++')
-        # a = np.where(mapping_matrix == 1.0)
-        # b = np.where(same_label_matrix == 1.0)
-        # print("mapping", mapping_matrix.sum((0,1)))
-        # print("samelb", same_label_matrix.sum((0,1)))
-        # print(set(a[0].tolist()).issubset(set(b[0].tolist())))
-        # print(set(a[1].tolist()).issubset(set(b[1].tolist())))
-        
         # iso to class
-        Y = 1 if 'iso' in key else 0
+        Y = 1 if "iso" in key else 0
 
-        #if n1+n2 > 300 : return None
+        # if n1+n2 > 300 : return None
         sample = {
-                  'H':H, \
-                  'A1': agg_adj1, \
-                  'A2': agg_adj2, \
-                  'Y': Y, \
-                  'V': valid, \
-                  'key': key, \
-                  'mapping': mapping_matrix, \
-                  'same_label': same_label_matrix
-                  }
+            "H": H,
+            "A1": agg_adj1,
+            "A2": agg_adj2,
+            "Y": Y,
+            "V": valid,
+            "key": key,
+            "mapping": mapping_matrix,
+            "same_label": same_label_matrix,
+        }
 
         return sample
 
-class UnderSampler(Sampler):
 
+class UnderSampler(Sampler):
     def __init__(self, weights, num_samples, replacement=True):
-        weights = np.array(weights)/np.sum(weights)
+        weights = np.array(weights) / np.sum(weights)
         self.weights = weights
         self.num_samples = num_samples
         self.replacement = replacement
-    
+
     def __iter__(self):
-        #return iter(torch.multinomial(self.weights, self.num_samples, self.replacement).tolist())
-        retval = np.random.choice(len(self.weights), self.num_samples, replace=self.replacement, p=self.weights) 
+        # return iter(torch.multinomial(self.weights, self.num_samples, self.replacement).tolist())
+        retval = np.random.choice(
+            len(self.weights),
+            self.num_samples,
+            replace=self.replacement,
+            p=self.weights,
+        )
         return iter(retval.tolist())
 
     def __len__(self):
         return self.num_samples
 
+
 def collate_fn(batch):
-    max_natoms = max([len(item['H']) for item in batch if item is not None])
-    
-    H = np.zeros((len(batch), max_natoms, batch[0]['H'].shape[-1]))
+    max_natoms = max([len(item["H"]) for item in batch if item is not None])
+
+    H = np.zeros((len(batch), max_natoms, batch[0]["H"].shape[-1]))
     A1 = np.zeros((len(batch), max_natoms, max_natoms))
     A2 = np.zeros((len(batch), max_natoms, max_natoms))
     M = np.zeros((len(batch), max_natoms, max_natoms))
@@ -140,18 +133,18 @@ def collate_fn(batch):
     V = np.zeros((len(batch), max_natoms))
 
     keys = []
-    
+
     for i in range(len(batch)):
-        natom = len(batch[i]['H'])
-        
-        H[i,:natom] = batch[i]['H']
-        A1[i,:natom,:natom] = batch[i]['A1']
-        A2[i,:natom,:natom] = batch[i]['A2']
-        M[i,:natom,:natom] = batch[i]['mapping']
-        S[i,:natom,:natom] = batch[i]['same_label']
-        Y[i] = batch[i]['Y']
-        V[i,:natom] = batch[i]['V']
-        keys.append(batch[i]['key'])
+        natom = len(batch[i]["H"])
+
+        H[i, :natom] = batch[i]["H"]
+        A1[i, :natom, :natom] = batch[i]["A1"]
+        A2[i, :natom, :natom] = batch[i]["A2"]
+        M[i, :natom, :natom] = batch[i]["mapping"]
+        S[i, :natom, :natom] = batch[i]["same_label"]
+        Y[i] = batch[i]["Y"]
+        V[i, :natom] = batch[i]["V"]
+        keys.append(batch[i]["key"])
 
     H = torch.from_numpy(H).float()
     A1 = torch.from_numpy(A1).float()
@@ -160,6 +153,5 @@ def collate_fn(batch):
     S = torch.from_numpy(S).float()
     Y = torch.from_numpy(Y).float()
     V = torch.from_numpy(V).float()
-    
-    return H, A1, A2, M, S, Y, V, keys
 
+    return H, A1, A2, M, S, Y, V, keys
