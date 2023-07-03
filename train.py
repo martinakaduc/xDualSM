@@ -179,7 +179,7 @@ def main(args):
             optimizer.step()
 
             # Collect loss, true label and predicted label
-            train_losses.append(loss.data.cpu().numpy())
+            train_losses.append(loss.data.cpu().item())
             train_true.append(Y.data.cpu().numpy())
             train_pred.append(pred.data.cpu().numpy())
 
@@ -206,7 +206,7 @@ def main(args):
             loss = loss_fn(pred, Y) + attn_loss
 
             # Collect loss, true label and predicted label
-            test_losses.append(loss.data.cpu().numpy())
+            test_losses.append(loss.data.cpu().item())
             test_true.append(Y.data.cpu().numpy())
             test_pred.append(pred.data.cpu().numpy())
 
@@ -215,11 +215,11 @@ def main(args):
         train_losses = np.mean(np.array(train_losses))
         test_losses = np.mean(np.array(test_losses))
 
-        train_pred = np.concatenate(np.array(train_pred), 0)
-        test_pred = np.concatenate(np.array(test_pred), 0)
+        train_pred = np.concatenate(train_pred, 0)
+        test_pred = np.concatenate(test_pred, 0)
 
-        train_true = np.concatenate(np.array(train_true), 0)
-        test_true = np.concatenate(np.array(test_true), 0)
+        train_true = np.concatenate(train_true, 0)
+        test_true = np.concatenate(test_true, 0)
 
         train_roc = roc_auc_score(train_true, train_pred)
         test_roc = roc_auc_score(test_true, test_pred)
