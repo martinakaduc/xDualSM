@@ -84,6 +84,10 @@ def main(args):
     if args.branch != "both":
         result_dir += "_" + args.branch
 
+    if args.dataset not in args.ckpt:
+        cross_ckpt = args.ckpt.split("/")[1].split("_")[0]
+        result_dir += "_" + cross_ckpt
+
     if not os.path.isdir(result_dir):
         os.system("mkdir " + result_dir)
 
