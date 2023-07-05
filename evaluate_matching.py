@@ -209,7 +209,7 @@ if __name__ == "__main__":
         help="tactic of defining number of hops",
         type=str,
         default="static",
-        choices=["static", "continuos", "jump"],
+        choices=["static", "cont", "jump"],
     )
     parser.add_argument("--nhop", help="number of hops", type=int, default=1)
     parser.add_argument("--branch", help="choosing branch",
