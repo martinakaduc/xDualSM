@@ -65,6 +65,8 @@ parser.add_argument(
 )
 parser.add_argument("--test_keys", help="test keys",
                     type=str, default="test_keys.pkl")
+parser.add_argument("--tag", help="Additional tag for saving and logging folder",
+                    type=str, default="")
 
 
 def main(args):
@@ -83,6 +85,10 @@ def main(args):
     if args.branch != "both":
         save_dir += "_" + args.branch
         log_dir += "_" + args.branch
+
+    if args.tag != "":
+        save_dir += "_" + args.tag
+        log_dir += "_" + args.tag
 
     # Make save dir if it doesn't exist
     if not os.path.isdir(save_dir):
