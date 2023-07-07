@@ -201,20 +201,23 @@ elif sys.argv[2] == "real":
     )
     # test_keys = os.listdir(data_proccessed_dir)
 
-    data_dir_train = "data_%s/datasets/%s" % (
-        sys.argv[2], data_name + "_train")
-    list_source_train = os.listdir(data_dir_train)
-    list_source_train = list(
-        filter(
-            lambda x: os.path.isdir(os.path.join(
-                data_dir_train, x)), list_source_train
+    if len(sys.argv) >= 4 and sys.argv[3] == "testonly":
+        train_keys = []
+    else:
+        data_dir_train = "data_%s/datasets/%s" % (
+            sys.argv[2], data_name + "_train")
+        list_source_train = os.listdir(data_dir_train)
+        list_source_train = list(
+            filter(
+                lambda x: os.path.isdir(os.path.join(
+                    data_dir_train, x)), list_source_train
+            )
         )
-    )
 
-    train_keys = load_dataset(
-        data_dir_train, list_source_train, data_proccessed_dir, additional_tag="train"
-    )
-    # train_keys = list(set(os.listdir(data_proccessed_dir)) - set(test_keys))
+        train_keys = load_dataset(
+            data_dir_train, list_source_train, data_proccessed_dir, additional_tag="train"
+        )
+        # train_keys = list(set(os.listdir(data_proccessed_dir)) - set(test_keys))
 
 # Notice that key which has "iso" is isomorphism, otherwise non-isomorphism
 
