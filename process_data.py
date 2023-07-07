@@ -158,6 +158,11 @@ if not os.path.exists(data_proccessed_dir):
 
 # %%
 if sys.argv[2] == "synthesis":
+    if len(sys.argv) >= 4 and sys.argv[3] == "testonly":
+        additional_tag = "test"
+    else:
+        additional_tag = ""
+
     data_dir = "data_%s/datasets/%s" % (sys.argv[2], data_name)
 
     list_source = os.listdir(data_dir)
@@ -165,18 +170,24 @@ if sys.argv[2] == "synthesis":
         filter(lambda x: os.path.isdir(os.path.join(data_dir, x)), list_source)
     )
 
-    valid_keys = load_dataset(data_dir, list_source, data_proccessed_dir)
+    valid_keys = load_dataset(
+        data_dir, list_source, data_proccessed_dir, additional_tag=additional_tag)
 
-    # Split train test
-    from sklearn.model_selection import train_test_split
+    if additional_tag == "test":
+        test_keys = [k for k in valid_keys if k.split("_")[0] in list_source]
+        train_keys = []
 
-    train_source, test_source = train_test_split(
-        list_source, test_size=0.2, random_state=42
-    )
-    # valid_keys = os.listdir(data_proccessed_dir)
+    else:
+        # Split train test
+        from sklearn.model_selection import train_test_split
 
-    train_keys = [k for k in valid_keys if k.split("_")[0] in train_source]
-    test_keys = [k for k in valid_keys if k.split("_")[0] in test_source]
+        train_source, test_source = train_test_split(
+            list_source, test_size=0.2, random_state=42
+        )
+        # valid_keys = os.listdir(data_proccessed_dir)
+
+        train_keys = [k for k in valid_keys if k.split("_")[0] in train_source]
+        test_keys = [k for k in valid_keys if k.split("_")[0] in test_source]
 
 elif sys.argv[2] == "real":
     data_dir = "data_%s/datasets/%s" % (sys.argv[2], data_name + "_test")
@@ -216,7 +227,9 @@ with open("%s/train_keys.pkl" % data_proccessed_dir, "wb") as f:
 with open("%s/test_keys.pkl" % data_proccessed_dir, "wb") as f:
     pickle.dump(test_keys, f)
 
-if sys.argv[2] == "real":
+if sys.argv[2] == "real" or (sys.argv[2] == "synthesis"
+                             and len(sys.argv) >= 4
+                             and sys.argv[3] == "testonly"):
     size_dict = pickle.load(
         open(f"{data_proccessed_dir}/subgraphs_size.pkl", "rb"))
     degree_dict = pickle.load(
