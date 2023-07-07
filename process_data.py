@@ -48,7 +48,8 @@ def read_graphs(database_file_name):
         if tgraph is not None:
             graphs[graph_cnt] = tgraph
             sizes[graph_cnt] = tgraph.number_of_nodes()
-            degrees[graph_cnt] = sum(dict(tgraph.degree).values()) / sizes[graph_cnt]
+            degrees[graph_cnt] = sum(
+                dict(tgraph.degree).values()) / sizes[graph_cnt]
 
     return graphs, sizes, degrees
 
@@ -145,7 +146,8 @@ def load_dataset(data_dir, list_source, save_dir, additional_tag=""):
 
     if additional_tag != "" and additional_tag == "test":
         pickle.dump(size_dict, open(f"{save_dir}/subgraphs_size.pkl", "wb"))
-        pickle.dump(degree_dict, open(f"{save_dir}/subgraphs_degree.pkl", "wb"))
+        pickle.dump(degree_dict, open(
+            f"{save_dir}/subgraphs_degree.pkl", "wb"))
 
     return list(size_dict.keys())
 
@@ -188,11 +190,13 @@ elif sys.argv[2] == "real":
     )
     # test_keys = os.listdir(data_proccessed_dir)
 
-    data_dir_train = "data_%s/datasets/%s" % (sys.argv[2], data_name + "_train")
+    data_dir_train = "data_%s/datasets/%s" % (
+        sys.argv[2], data_name + "_train")
     list_source_train = os.listdir(data_dir_train)
     list_source_train = list(
         filter(
-            lambda x: os.path.isdir(os.path.join(data_dir_train, x)), list_source_train
+            lambda x: os.path.isdir(os.path.join(
+                data_dir_train, x)), list_source_train
         )
     )
 
@@ -212,66 +216,69 @@ with open("%s/train_keys.pkl" % data_proccessed_dir, "wb") as f:
 with open("%s/test_keys.pkl" % data_proccessed_dir, "wb") as f:
     pickle.dump(test_keys, f)
 
-size_dict = pickle.load(open(f"{data_proccessed_dir}/subgraphs_size.pkl", "rb"))
-degree_dict = pickle.load(open(f"{data_proccessed_dir}/subgraphs_degree.pkl", "rb"))
+if sys.argv[2] == "real":
+    size_dict = pickle.load(
+        open(f"{data_proccessed_dir}/subgraphs_size.pkl", "rb"))
+    degree_dict = pickle.load(
+        open(f"{data_proccessed_dir}/subgraphs_degree.pkl", "rb"))
 
-nondense_0_20 = list(
-    filter(lambda x: size_dict[x] <= 20 and degree_dict[x] <= 3, test_keys)
-)
-nondense_20_40 = list(
-    filter(
-        lambda x: size_dict[x] > 20 and size_dict[x] <= 40 and degree_dict[x] <= 3,
-        test_keys,
+    nondense_0_20 = list(
+        filter(lambda x: size_dict[x] <= 20 and degree_dict[x] <= 3, test_keys)
     )
-)
-nondense_40_60 = list(
-    filter(
-        lambda x: size_dict[x] > 40 and size_dict[x] <= 60 and degree_dict[x] <= 3,
-        test_keys,
+    nondense_20_40 = list(
+        filter(
+            lambda x: size_dict[x] > 20 and size_dict[x] <= 40 and degree_dict[x] <= 3,
+            test_keys,
+        )
     )
-)
-nondense_60_ = list(
-    filter(lambda x: size_dict[x] >= 60 and degree_dict[x] <= 3, test_keys)
-)
-
-dense_0_20 = list(
-    filter(lambda x: size_dict[x] <= 20 and degree_dict[x] > 3, test_keys)
-)
-dense_20_40 = list(
-    filter(
-        lambda x: size_dict[x] > 20 and size_dict[x] <= 40 and degree_dict[x] > 3,
-        test_keys,
+    nondense_40_60 = list(
+        filter(
+            lambda x: size_dict[x] > 40 and size_dict[x] <= 60 and degree_dict[x] <= 3,
+            test_keys,
+        )
     )
-)
-dense_40_60 = list(
-    filter(
-        lambda x: size_dict[x] > 40 and size_dict[x] <= 60 and degree_dict[x] > 3,
-        test_keys,
+    nondense_60_ = list(
+        filter(lambda x: size_dict[x] >= 60 and degree_dict[x] <= 3, test_keys)
     )
-)
-dense_60_ = list(filter(lambda x: size_dict[x] >= 60 and degree_dict[x] > 3, test_keys))
 
+    dense_0_20 = list(
+        filter(lambda x: size_dict[x] <= 20 and degree_dict[x] > 3, test_keys)
+    )
+    dense_20_40 = list(
+        filter(
+            lambda x: size_dict[x] > 20 and size_dict[x] <= 40 and degree_dict[x] > 3,
+            test_keys,
+        )
+    )
+    dense_40_60 = list(
+        filter(
+            lambda x: size_dict[x] > 40 and size_dict[x] <= 60 and degree_dict[x] > 3,
+            test_keys,
+        )
+    )
+    dense_60_ = list(
+        filter(lambda x: size_dict[x] >= 60 and degree_dict[x] > 3, test_keys))
 
-with open("%s/test_keys_%s.pkl" % (data_proccessed_dir, "nondense_0_20"), "wb") as f:
-    pickle.dump(nondense_0_20, f)
+    with open("%s/test_keys_%s.pkl" % (data_proccessed_dir, "nondense_0_20"), "wb") as f:
+        pickle.dump(nondense_0_20, f)
 
-with open("%s/test_keys_%s.pkl" % (data_proccessed_dir, "nondense_20_40"), "wb") as f:
-    pickle.dump(nondense_20_40, f)
+    with open("%s/test_keys_%s.pkl" % (data_proccessed_dir, "nondense_20_40"), "wb") as f:
+        pickle.dump(nondense_20_40, f)
 
-with open("%s/test_keys_%s.pkl" % (data_proccessed_dir, "nondense_40_60"), "wb") as f:
-    pickle.dump(nondense_40_60, f)
+    with open("%s/test_keys_%s.pkl" % (data_proccessed_dir, "nondense_40_60"), "wb") as f:
+        pickle.dump(nondense_40_60, f)
 
-with open("%s/test_keys_%s.pkl" % (data_proccessed_dir, "nondense_60_"), "wb") as f:
-    pickle.dump(nondense_60_, f)
+    with open("%s/test_keys_%s.pkl" % (data_proccessed_dir, "nondense_60_"), "wb") as f:
+        pickle.dump(nondense_60_, f)
 
-with open("%s/test_keys_%s.pkl" % (data_proccessed_dir, "dense_0_20"), "wb") as f:
-    pickle.dump(dense_0_20, f)
+    with open("%s/test_keys_%s.pkl" % (data_proccessed_dir, "dense_0_20"), "wb") as f:
+        pickle.dump(dense_0_20, f)
 
-with open("%s/test_keys_%s.pkl" % (data_proccessed_dir, "dense_20_40"), "wb") as f:
-    pickle.dump(dense_20_40, f)
+    with open("%s/test_keys_%s.pkl" % (data_proccessed_dir, "dense_20_40"), "wb") as f:
+        pickle.dump(dense_20_40, f)
 
-with open("%s/test_keys_%s.pkl" % (data_proccessed_dir, "dense_40_60"), "wb") as f:
-    pickle.dump(dense_40_60, f)
+    with open("%s/test_keys_%s.pkl" % (data_proccessed_dir, "dense_40_60"), "wb") as f:
+        pickle.dump(dense_40_60, f)
 
-with open("%s/test_keys_%s.pkl" % (data_proccessed_dir, "dense_60_"), "wb") as f:
-    pickle.dump(dense_60_, f)
+    with open("%s/test_keys_%s.pkl" % (data_proccessed_dir, "dense_60_"), "wb") as f:
+        pickle.dump(dense_60_, f)
