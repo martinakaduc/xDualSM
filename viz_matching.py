@@ -13,9 +13,9 @@ from scipy.spatial import distance_matrix
 
 class InferenceGNN:
     def __init__(self, args) -> None:
-        if args.ngpu > 0:
-            cmd = utils.set_cuda_visible_device(args.ngpu)
-            os.environ["CUDA_VISIBLE_DEVICES"] = cmd[:-1]
+        # if args.ngpu > 0:
+        #     cmd = utils.set_cuda_visible_device(args.ngpu)
+        #     os.environ["CUDA_VISIBLE_DEVICES"] = cmd[:-1]
 
         self.model = gnn(args)
         self.device = torch.device(
