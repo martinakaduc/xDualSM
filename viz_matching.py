@@ -333,7 +333,8 @@ if __name__ == "__main__":
 
         utils.plotGraph(graph, nodeLabels=node_labels,
                         nodeColors=list(node_colors.values()),
-                        edgeColors=list(edge_colors.values()))
+                        edgeColors=list(edge_colors.values()),
+                        fig_name=f"{args.result_dir}/{args.source}_{args.query}.pdf")
 
         with open(f"{args.result_dir}/mapping_{args.source}_{args.query}.csv", "w", encoding="utf8") as f:
             f.write("subgraph_node,graph_node,score\n")

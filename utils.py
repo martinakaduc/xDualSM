@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 
 
 def plotGraph(
-    graph: nx.Graph, nodeLabels=None, showLabel=True, nodeColors=None, edgeColors=None
+    graph: nx.Graph, nodeLabels=None, showLabel=True, nodeColors=None, edgeColors=None, fig_name=None
 ):
     pos = nx.circular_layout(graph)
     plt.figure()
@@ -42,8 +42,7 @@ def plotGraph(
     # nx.draw_networkx_edge_labels(graph, pos, edge_labels=edgeLabels, font_color='red')
 
     plt.axis("off")
-    plt.savefig(
-        "./figures/{}.png".format(np.array2string(graph[0])), format="PNG")
+    plt.savefig(fig_name, dpi=300)
 
 
 def write_graphs(graphs, out_file_name):
