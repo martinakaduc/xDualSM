@@ -291,10 +291,11 @@ if __name__ == "__main__":
 
             list_nm = nmaping.split(",")
             for nm in list_nm:
-                if mapping_gt[node] == int(nm) and node_colors[node] != "lime":
+                if mapping_gt[node] == int(nm):
                     node_colors[node] = "lime"
+                    break
 
-                if mapping_gt[node] != int(nm) and node_colors[node] != "lime":
+                if mapping_gt[node] != int(nm) and node_colors[node] == "gray":
                     node_colors[node] = "pink"
 
         for gn, sgn in mapping_gt.items():
