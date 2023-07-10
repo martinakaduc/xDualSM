@@ -109,7 +109,7 @@ class InferenceGNN:
     def predict_label(self, list_subgraphs, list_graphs):
         list_inputs = self.prepare_multi_input(list_subgraphs, list_graphs)
         input_tensors = self.input_to_tensor(list_inputs)
-        results = self.model.test_model(input_tensors)
+        results = self.model(input_tensors)
         return results
 
     def predict_embedding(self, list_subgraphs, list_graphs):
