@@ -251,12 +251,12 @@ if __name__ == "__main__":
         for x, y in zip(x_coord, y_coord):
             if x < n_subgraph_atom and y >= n_subgraph_atom:
                 interaction_dict[(x, y-n_subgraph_atom)
-                                 ] = interactions[0][x][y]
+                                 ] = interactions[x][y]
                 # print("(", x, y-n_ligand_atom, ")")
 
             if x >= n_subgraph_atom and y < n_subgraph_atom and (y, x-n_subgraph_atom) not in interaction_dict:
                 interaction_dict[(y, x-n_subgraph_atom)
-                                 ] = interactions[0][x][y]
+                                 ] = interactions[x][y]
                 # print("(", y, x-n_ligand_atom, ")")
 
         list_mapping = list(interaction_dict.keys())
