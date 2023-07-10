@@ -242,8 +242,9 @@ if __name__ == "__main__":
     if True:
         interactions = model.predict_embedding([subgraph], [graph])
         # print("interactions", interactions[0])
+        interactions = interactions[0].cpu().detach().numpy()
         n_subgraph_atom = subgraph.number_of_nodes()
-        x_coord, y_coord = np.where(interactions[0] > args.mapping_threshold)
+        x_coord, y_coord = np.where(interactions > args.mapping_threshold)
 
         print("Embedding: (subgraph node, graph node)")
         interaction_dict = {}
