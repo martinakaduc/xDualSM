@@ -251,8 +251,10 @@ if __name__ == "__main__":
     if args.branch != "both":
         result_dir += "_" + args.branch
     if args.dataset not in args.ckpt:
-        cross_ckpt = args.ckpt.split("/")[1].split("_")[0]
-        result_dir += "_" + cross_ckpt
+        cross_ckpt = args.ckpt.split("/")[1].split("_")
+        result_dir += "_" + cross_ckpt[0]
+        if len(cross_ckpt) > 4:
+            result_dir += "_" + cross_ckpt[1]
     args.result_dir = result_dir
 
     if not os.path.isdir(result_dir):
