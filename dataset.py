@@ -43,12 +43,12 @@ class BaseDataset(Dataset):
 
         # Prepare subgraph
         n1 = m1.number_of_nodes()
-        adj1 = nx.to_numpy_matrix(m1) + np.eye(n1)
+        adj1 = nx.to_numpy_array(m1) + np.eye(n1)
         H1 = onehot_encoding_node(m1, self.embedding_dim)
 
         # Prepare source graph
         n2 = m2.number_of_nodes()
-        adj2 = nx.to_numpy_matrix(m2) + np.eye(n2)
+        adj2 = nx.to_numpy_array(m2) + np.eye(n2)
         H2 = onehot_encoding_node(m2, self.embedding_dim)
 
         # Aggregation node encoding
