@@ -198,6 +198,9 @@ def main(args):
             loss.backward()
             optimizer.step()
 
+            # Print loss at the end of tqdm bar
+            tqdm.write("Loss: %.4f" % loss.data.cpu().item())
+
             # Collect loss, true label and predicted label
             train_losses.append(loss.data.cpu().item())
             train_true.append(Y.data.cpu().numpy())
